@@ -2,14 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f1ea">
   <title>How do people feel about paintings?</title>
   <meta name="description" content="A 20-minute research study about descriptions of paintings.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top"><span class="brand">Many Views · study</span>
-    <label class="lang"><span class="sr" id="lang-l">Language</span><select id="lang" aria-labelledby="lang-l"></select></label></header>
+  <div class="gbar" aria-hidden="true"><span id="bar"></span></div>
+  <header class="top">
+    <button type="button" id="topback" class="backbtn" hidden><span class="arr" aria-hidden="true">←</span> <span id="topback-t">Back</span></button>
+    <span class="brand"><span class="logo" aria-hidden="true"></span>Many Views</span>
+    <label class="lang"><span class="sr" id="lang-l">Language</span><select id="lang" aria-labelledby="lang-l"></select></label>
+  </header>
   <main id="main"></main>
   <script src="config.js"></script>
   <script src="i18n.js"></script>

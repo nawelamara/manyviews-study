@@ -1,12 +1,11 @@
-// All texts of the online study in 5 languages. The translations (zh-Hant, zh-Hans, fr, ar) were drafted with AI help
+// All texts of the online study in 5 languages. The translations (zh-Hant, fr, ar) were drafted with AI help
 // and must be checked by a native speaker before the study opens. Painting titles and artist names stay in English.
 'use strict';
-const LANGS = [['en', 'English'], ['zh-Hant', '繁體中文'], ['zh-Hans', '简体中文'], ['fr', 'Français'], ['ar', 'العربية']];
+const LANGS = [['en', 'English'], ['zh-Hant', '繁體中文'], ['fr', 'Français'], ['ar', 'العربية']];
 
 const EMO = {
   en: {},
   'zh-Hant': { happiness: '快樂', surprise: '驚訝', anticipation: '期待', trust: '信任', humility: '謙卑', optimism: '樂觀', fear: '恐懼', sadness: '悲傷', love: '愛', disgust: '厭惡', gratitude: '感激', pessimism: '悲觀', arrogance: '傲慢', disagreeableness: '不友善', anger: '憤怒', agreeableness: '親切', regret: '後悔', shame: '羞恥', shyness: '害羞', none: '沒有特別的情緒' },
-  'zh-Hans': { happiness: '快乐', surprise: '惊讶', anticipation: '期待', trust: '信任', humility: '谦卑', optimism: '乐观', fear: '恐惧', sadness: '悲伤', love: '爱', disgust: '厌恶', gratitude: '感激', pessimism: '悲观', arrogance: '傲慢', disagreeableness: '不友善', anger: '愤怒', agreeableness: '亲切', regret: '后悔', shame: '羞耻', shyness: '害羞', none: '没有特别的情绪' },
   fr: { happiness: 'joie', surprise: 'surprise', anticipation: 'anticipation', trust: 'confiance', humility: 'humilité', optimism: 'optimisme', fear: 'peur', sadness: 'tristesse', love: 'amour', disgust: 'dégoût', gratitude: 'gratitude', pessimism: 'pessimisme', arrogance: 'arrogance', disagreeableness: 'hostilité', anger: 'colère', agreeableness: 'amabilité', regret: 'regret', shame: 'honte', shyness: 'timidité', none: 'aucune émotion particulière' },
   ar: { happiness: 'سعادة', surprise: 'دهشة', anticipation: 'ترقّب', trust: 'ثقة', humility: 'تواضع', optimism: 'تفاؤل', fear: 'خوف', sadness: 'حزن', love: 'حب', disgust: 'اشمئزاز', gratitude: 'امتنان', pessimism: 'تشاؤم', arrogance: 'غطرسة', disagreeableness: 'نفور', anger: 'غضب', agreeableness: 'لطف', regret: 'ندم', shame: 'عار', shyness: 'خجل', none: 'لا شعور معيّن' },
 };
@@ -16,7 +15,6 @@ const emo = (lang, f) => (lang === 'en' ? (f === 'none' ? 'no particular emotion
 const FMT = {
   en: { list: (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]), cnt: (e, c, n) => `${e} (${c} of ${n})` },
   'zh-Hant': { list: (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join('、') + '和' + xs[xs.length - 1]), cnt: (e, c, n) => `${e}（${n} 人中 ${c} 人）` },
-  'zh-Hans': { list: (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join('、') + '和' + xs[xs.length - 1]), cnt: (e, c, n) => `${e}（${n} 人中 ${c} 人）` },
   fr: { list: (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' et ' + xs[xs.length - 1]), cnt: (e, c, n) => `${e} (${c} sur ${n})` },
   ar: { list: (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join('، ') + ' و' + xs[xs.length - 1]), cnt: (e, c, n) => `${e} (${c} من ${n})` },
 };
@@ -43,15 +41,6 @@ function describe(lang, s, cond) {
       few: () => `${s.nEmotion < n ? `${n} 位觀看者中只有 ${s.nEmotion} 位選擇了情緒` : `只有 ${n} 位觀看者作答`}，資料不足以可靠判斷觀看者的意見是否一致。他們選擇了${cnts(s.order.slice(0, 3))}。`,
       opp: '其中一些情緒的方向相反（正面與負面）。',
       model: () => `模型預測（AI 的估計，不是觀看者的選擇）：主要是${E(s.model[0])}，也有一些${E(s.model[1])}和${E(s.model[2])}。`,
-    },
-    'zh-Hans': {
-      A: () => `这幅画唤起${E(s.order[0][0])}。`,
-      B: () => `观看者选择了${cnts(s.order.slice(0, 3))}。`,
-      leader: () => `较多观看者选择了${cnts([s.order[0]])}，不过也有人选择了其他情绪，例如${cnts(s.order.slice(1, 3))}。`,
-      varied: () => `观看者的反应各不相同。以下是几种不同的反应：${cnts(s.order)}。`,
-      few: () => `${s.nEmotion < n ? `${n} 位观看者中只有 ${s.nEmotion} 位选择了情绪` : `只有 ${n} 位观看者作答`}，数据不足以可靠判断观看者的意见是否一致。他们选择了${cnts(s.order.slice(0, 3))}。`,
-      opp: '其中一些情绪的方向相反（正面与负面）。',
-      model: () => `模型预测（AI 的估计，不是观看者的选择）：主要是${E(s.model[0])}，也有一些${E(s.model[1])}和${E(s.model[2])}。`,
     },
     fr: {
       A: () => `Ce tableau évoque : ${E(s.order[0][0])}.`,
@@ -140,36 +129,6 @@ const UI = {
     finish: '完成', endH: '謝謝您！', end: '您的回答已儲存，您可以關閉此頁面。', code: '您的完成代碼：',
     sending: '正在儲存您的回答…', failed: '無法送出您的回答。請保持此頁面開啟並再試一次。', retry: '再試一次',
   },
-  'zh-Hans': {
-    title: '人们对画作有什么感受？', closed: '本研究尚未开放。谢谢您的关注！',
-    chooseLang: '请选择语言', next: '下一步', cont: '继续', read: '我已阅读', start: '开始',
-    infoH: '关于本研究',
-    info: ['这是国立台中教育大学（台湾）人工智能与新媒体艺术实验室的研究。',
-      '本研究比较描述“人们对画作的感受”的不同方式。您将观看 20 幅画作、阅读简短描述并回答简单问题，约需 20–25 分钟。',
-      '感受没有对错之分，问题只询问您所读到的内容。',
-      '参与完全自愿。您可随时关闭页面停止参与；未完成的作答除了已提交的答案外不会保留。',
-      '我们不会询问您的姓名、电子邮箱或任何个人信息。您的回答是匿名的，仅用于研究。',
-      '您必须年满 18 岁。'],
-    contact: '对本研究有疑问请联系：', age: '我已年满 18 岁。', agree: '我已阅读以上说明并同意参与。',
-    introH: '进行方式',
-    intro: ['观看画作。您可以选择画作带给您的情绪（可跳过，不会保存）。', '阅读一段简短描述和一则模型预测。', '回答两个问题。此时描述会被隐藏，请仔细阅读。'],
-    introEnd: '我们先进行 2 幅练习画作。', startPractice: '开始练习',
-    practice: (i, n) => `练习 ${i} / ${n}`, painting: (i, n) => `画作 ${i} / ${n}`,
-    feel: '这幅画给您什么感受？请选择符合的情绪（可跳过，不会保存）。', descH: '描述',
-    q1: '根据您读到的内容，之前的观看者对这幅画的反应如何？',
-    q1o: { leader: '有一种情绪明显比其他情绪更常见', varied: '观看者的反应各不相同', few: '作答人数太少，无法判断', dontknow: '我不知道' },
-    q2: '之前的观看者最常选择哪一种情绪？', dontknow: '我不知道',
-    readyH: '练习完成', ready: '现在开始 18 幅正式画作，分为 3 部分，每部分 6 幅，每部分结束后有两个简短问题。', begin: '开始',
-    rateH: '关于刚才的 6 段描述', r1: '这些描述让我保有自己的感受空间。', r2: '这些描述很难理解。',
-    dis: '非常不同意', agr: '非常同意',
-    susH: '关于这个应用', susIntro: '请就每个陈述选择您的同意程度（1 = 非常不同意，5 = 非常同意）。',
-    sus: ['我想我会经常使用这个应用。', '我觉得这个应用过于复杂。', '我觉得这个应用很容易使用。', '我想我需要技术人员的帮助才能使用这个应用。',
-      '我觉得这个应用的各项功能整合得很好。', '我觉得这个应用有太多不一致的地方。', '我想大多数人都能很快学会使用这个应用。',
-      '我觉得这个应用使用起来很麻烦。', '我在使用这个应用时很有信心。', '在开始使用这个应用之前，我需要学习很多东西。'],
-    attention: '为了确认您有仔细阅读，请在此选择 2。',
-    finish: '完成', endH: '谢谢您！', end: '您的回答已保存，您可以关闭此页面。', code: '您的完成代码：',
-    sending: '正在保存您的回答…', failed: '无法提交您的回答。请保持此页面打开并再试一次。', retry: '再试一次',
-  },
   fr: {
     title: 'Que ressentent les gens devant des tableaux ?', closed: 'Cette étude n’est pas encore ouverte. Merci de votre intérêt !',
     chooseLang: 'Choisissez votre langue', next: 'Suivant', cont: 'Continuer', read: 'J’ai lu', start: 'Commencer',
@@ -254,15 +213,6 @@ const EXTRA = {
     gH: '一些情緒詞是什麼意思？',
     g: { humility: '感到謙虛，不驕傲', anticipation: '等待或期待某件事', trust: '覺得可以依靠某人', agreeableness: '感到友善、親切', disagreeableness: '感到不友善或有敵意', arrogance: '覺得自己比別人優越' },
   },
-  'zh-Hans': {
-    explain: '每幅画在您之前都有大约 10 个人看过，并选择了他们的感受。您会读到一段简短的描述，说明他们的回答，以及一个电脑程序（AI）的猜测。',
-    fbH: '检查您的答案', right: '答对了！', wrong: '不太对。',
-    fbQ1: { leader: '有一种情绪被选择的人数明显比其他情绪多', varied: '有几种情绪被选择的人数差不多', few: '作答的人太少，无法确定' },
-    fbQ1t: (ans, why) => `正确答案是“${ans}”，因为${why}。`,
-    fbQ2t: (v, m) => `之前的观看者最常选择${v}。${m}是 AI 的猜测，不是观看者的选择。`,
-    gH: '一些情绪词是什么意思？',
-    g: { humility: '感到谦虚，不骄傲', anticipation: '等待或期待某件事', trust: '觉得可以依靠某人', agreeableness: '感到友善、亲切', disagreeableness: '感到不友善或有敌意', arrogance: '觉得自己比别人优越' },
-  },
   fr: {
     explain: 'Pour chaque tableau, une dizaine de personnes l’ont regardé avant vous et ont choisi les émotions qu’elles ressentaient. Vous lirez une courte description de leurs réponses, et une estimation faite par un programme informatique (IA).',
     fbH: 'Vérifiez votre réponse', right: 'Correct !', wrong: 'Pas tout à fait.',
@@ -286,19 +236,16 @@ Object.keys(EXTRA).forEach((l) => Object.assign(UI[l], EXTRA[l]));
 
 // ---- Friendlier design: landing page, part breaks, try again in the practice, sharing at the end.
 const EXTRA2 = {
-  en: { sub: 'Look at paintings, read what other people felt, and help us test better art descriptions.', pills: ['About 20 minutes', 'Anonymous', 'No art knowledge needed'],
+  en: { studyWord: 'Research study', zoom: 'See the painting bigger', sub: 'Look at paintings, read what other people felt, and help us test better art descriptions.', pills: ['About 20 minutes', 'Anonymous', 'No art knowledge needed'],
     partDone: (k) => `Part ${k} of 3 done!`, cheer: ['Nice start. Two quick questions, then the next part.', 'Two-thirds done. Two quick questions, then the last part.', 'Last part done. Two quick questions, then a short final page.'],
     tryAgain: 'Read it again and try again', share: 'Share the study', copied: 'Link copied!', shareText: 'A 20-minute study about how people feel about paintings:' },
-  'zh-Hant': { sub: '欣賞畫作、閱讀其他人的感受，幫助我們測試更好的藝術描述。', pills: ['約 20 分鐘', '匿名', '不需要藝術知識'],
+  'zh-Hant': { studyWord: '研究問卷', zoom: '放大看這幅畫', sub: '欣賞畫作、閱讀其他人的感受，幫助我們測試更好的藝術描述。', pills: ['約 20 分鐘', '匿名', '不需要藝術知識'],
     partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的開始！回答兩個簡短問題後進入下一部分。', '已完成三分之二！回答兩個簡短問題後進入最後一部分。', '最後一部分完成！回答兩個簡短問題，然後是最後一頁。'],
     tryAgain: '再讀一次並重新作答', share: '分享這項研究', copied: '已複製連結！', shareText: '一項約 20 分鐘、關於人們對畫作感受的研究：' },
-  'zh-Hans': { sub: '欣赏画作、阅读其他人的感受，帮助我们测试更好的艺术描述。', pills: ['约 20 分钟', '匿名', '不需要艺术知识'],
-    partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的开始！回答两个简短问题后进入下一部分。', '已完成三分之二！回答两个简短问题后进入最后一部分。', '最后一部分完成！回答两个简短问题，然后是最后一页。'],
-    tryAgain: '再读一次并重新作答', share: '分享这项研究', copied: '已复制链接！', shareText: '一项约 20 分钟、关于人们对画作感受的研究：' },
-  fr: { sub: 'Regardez des tableaux, lisez ce que d’autres personnes ont ressenti, et aidez-nous à tester de meilleures descriptions.', pills: ['Environ 20 minutes', 'Anonyme', 'Aucune connaissance en art requise'],
+  fr: { studyWord: 'Étude de recherche', zoom: 'Voir le tableau en plus grand', sub: 'Regardez des tableaux, lisez ce que d’autres personnes ont ressenti, et aidez-nous à tester de meilleures descriptions.', pills: ['Environ 20 minutes', 'Anonyme', 'Aucune connaissance en art requise'],
     partDone: (k) => `Partie ${k} sur 3 terminée !`, cheer: ['Bon début. Deux petites questions, puis la partie suivante.', 'Deux tiers terminés. Deux petites questions, puis la dernière partie.', 'Dernière partie terminée. Deux petites questions, puis une courte page finale.'],
     tryAgain: 'Relire et réessayer', share: 'Partager l’étude', copied: 'Lien copié !', shareText: 'Une étude de 20 minutes sur ce que les gens ressentent devant des tableaux :' },
-  ar: { sub: 'شاهد لوحات فنية، واقرأ ما شعر به الآخرون، وساعدنا في اختبار أوصاف أفضل للفن.', pills: ['نحو 20 دقيقة', 'مجهول الهوية', 'لا تحتاج إلى معرفة بالفن'],
+  ar: { studyWord: 'دراسة بحثية', zoom: 'عرض اللوحة بحجم أكبر', sub: 'شاهد لوحات فنية، واقرأ ما شعر به الآخرون، وساعدنا في اختبار أوصاف أفضل للفن.', pills: ['نحو 20 دقيقة', 'مجهول الهوية', 'لا تحتاج إلى معرفة بالفن'],
     partDone: (k) => `انتهى الجزء ${k} من 3!`, cheer: ['بداية رائعة. سؤالان قصيران ثم الجزء التالي.', 'أنجزت الثلثين. سؤالان قصيران ثم الجزء الأخير.', 'انتهى الجزء الأخير. سؤالان قصيران ثم صفحة أخيرة قصيرة.'],
     tryAgain: 'اقرأ مرة أخرى وأعد المحاولة', share: 'شارك الدراسة', copied: 'تم نسخ الرابط!', shareText: 'دراسة مدتها 20 دقيقة حول ما يشعر به الناس أمام اللوحات:' },
 };
@@ -329,18 +276,6 @@ const SIMPLE = {
     good: '太好了，您掌握了！', hmm: '差一點！正確答案是：', tryAgain: '再讀一次',
     blockDone: (b) => `第 ${b} 部分完成（共 3 部分）！`, rateIntro: '關於剛才讀到的描述，有兩個簡短問題：',
     r1: '這些描述讓我保有自己感受的空間。', susH: '關於這個網站的簡短回饋', back: '返回', endH: '謝謝您！🎉',
-  },
-  'zh-Hans': {
-    welcomeSub: '约 20 分钟・匿名・感受没有对错', letsGo: '开始吧',
-    explain: '每幅画在您之前大约有 10 个人看过，他们选出了这幅画带给他们的感受。',
-    steps: [['👀', '看', '看看这幅画。'], ['📖', '读', '读一段简短描述，说明之前的人有什么感受，以及一个 AI 的猜测。'], ['✅', '答', '回答两个简单问题。这时描述会被隐藏，请仔细阅读。']],
-    feel: '这幅画带给您什么感受？点选任何感受（可跳过）。',
-    q1: '在您之前的人对这幅画有什么感受？',
-    q1o: { leader: '有一种感受特别突出', varied: '大家的感受很不一样', few: '回答的人太少，无法知道', dontknow: '我不确定' },
-    q2: '他们最常选择哪一种感受？', dontknow: '我不确定',
-    good: '太好了，您掌握了！', hmm: '差一点！正确答案是：', tryAgain: '再读一次',
-    blockDone: (b) => `第 ${b} 部分完成（共 3 部分）！`, rateIntro: '关于刚才读到的描述，有两个简短问题：',
-    r1: '这些描述让我保有自己感受的空间。', susH: '关于这个网站的简短反馈', back: '返回', endH: '谢谢您！🎉',
   },
   fr: {
     welcomeSub: 'Environ 20 minutes · anonyme · pas de bon ou de mauvais ressenti', letsGo: 'C’est parti',

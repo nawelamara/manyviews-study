@@ -1,7 +1,7 @@
-# Many Views – online study (5 languages)
+# Many Views – online study (4 languages)
 
 A public web page for the description study (A single emotion / B fixed top 3 / C agreement-adaptive), in English,
-Traditional Chinese, Simplified Chinese, French and Arabic. Anonymous answers go to a Google Sheet you own.
+Traditional Chinese, French and Arabic. Anonymous answers go to a Google Sheet you own.
 
 **The page is closed (`OPEN: false` in `config.js`) until the ethics review or exemption is approved and the supervisor agrees.**
 While closed, you can still test it with `?preview=1` at the end of the address (answers in preview are marked, and no
@@ -30,7 +30,7 @@ the text is hidden → Q1 "how did earlier viewers respond?" and Q2 "which emoti
    (Apps Script → Project Settings → Script properties → delete `next` and the `n_…` entries).
 
 ## Open it (only after approval)
-Set `OPEN: true` in `config.js`, upload the folder again (step 4). Share the link; add `?lang=zh-Hant`, `?lang=zh-Hans`,
+Set `OPEN: true` in `config.js`, upload the folder again (step 4). Share the link; add `?lang=zh-Hant`,
 `?lang=fr` or `?lang=ar` to open in that language (e.g. Chinese link for Taiwanese groups).
 
 ## Balance
@@ -43,7 +43,7 @@ It removes unfinished sessions and attention-check failures and prints the resul
 
 ## Before opening — checklist
 - [ ] Ethics approval / exemption; supervisor agrees; the online version (public recruitment, Google Sheet) is in the application
-- [ ] Translations checked by a native speaker (zh-Hant, zh-Hans, fr, ar)
+- [ ] Translations checked by a native speaker (zh-Hant, fr, ar)
 - [ ] `CONTACT` filled in; consent text approved by the ethics committee
 - [ ] Test run in every language; test rows deleted; counter reset
 - [ ] 5-person pilot (in preview or a separate sheet), then fix anything unclear
