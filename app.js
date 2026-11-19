@@ -56,11 +56,12 @@ function scaleHtml(name, legend, n) {
     Array.from({ length: n }, (_, k) => `<label><input type="radio" name="${name}" value="${k + 1}">${k + 1}</label>`).join('') +
     `</div><div class="ends"><span>1 = ${esc(T.dis)}</span><span>${n} = ${esc(T.agr)}</span></div></fieldset>`;
 }
+const glossary = () => `<details class="gloss"><summary>${esc(T.gH)}</summary><ul>${Object.entries(T.g).map(([f, d]) => `<li><b>${esc(emo(lang, f))}</b>: ${esc(d)}</li>`).join('')}</ul></details>`;
 const val = (name) => { const x = main.querySelector(`input[name="${name}"]:checked`); return x ? x.value : null; };
 
 // ---- flow
 function welcome() {
-  if (!C.OPEN && !preview) { screen(`<div class="hero"><h1>${esc(T.title)}</h1><p>${esc(T.closed)}</p></div>`); return; }
+  if ((!C.OPEN || !C.ENDPOINT) && !preview) { screen(`<div class="hero"><h1>${esc(T.title)}</h1><p>${esc(T.closed)}</p></div>`); return; }
   screen(`<div class="hero"><h1>${esc(T.title)}</h1><p>${esc(T.chooseLang)}</p></div>
     <div class="langs">${LANGS.map(([k, name]) => `<button type="button" data-l="${k}" lang="${k}">${esc(name)}</button>`).join('')}</div>`);
   main.querySelectorAll('[data-l]').forEach((b) => b.addEventListener('click', () => { setLang(b.dataset.l); consent(); }));
@@ -82,7 +83,7 @@ function consent() {
   });
 }
 function intro() {
-  screen(`<h1>${esc(T.introH)}</h1><div class="card"><ol>${T.intro.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p>${esc(T.introEnd)}</p></div>
+  screen(`<h1>${esc(T.introH)}</h1><div class="card"><p>${esc(T.explain)}</p></div><div class="card"><ol>${T.intro.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p>${esc(T.introEnd)}</p></div>
     <button class="primary" id="go">${esc(T.startPractice)}</button>`);
   document.getElementById('go').addEventListener('click', () => trial({ practice: true, i: 0 }));
 }
@@ -90,18 +91,18 @@ function trial(pos) {
   const practice = pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
   const prog = `<p class="progress"><span>${esc(practice ? T.practice(k, total) : T.painting(k, total))}</span><span class="bar"><span style="width:${(100 * k / total).toFixed(0)}%"></span></span></p>`;
-  const head = prog + `<figure class="frame"><img src="images/${s.id}.jpg" alt="${esc(s.title)}, ${esc(s.artist)}"></figure>
+  const head = prog + `<figure class="frame"><img src="images/${s.id}.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${s.id}.jpg'}" alt="${esc(s.title)}, ${esc(s.artist)}"></figure>
     <p class="caption" lang="en">${esc(s.title)} · ${esc(s.artist)}${s.year ? ' · ' + esc(s.year) : ''}</p>`;
   // step 1: look (optional emotion buttons, not saved)
   screen(head + `<p>${esc(T.feel)}</p><div class="chips">${[...FEELINGS].map((f) => emo(lang, f)).sort((a, b) => a.localeCompare(b, lang)).concat([emo(lang, 'none')])
     .map((e) => `<button type="button" class="chip" aria-pressed="false">${esc(e)}</button>`).join('')}</div>
-    <button class="primary" id="go">${esc(T.cont)}</button>`);
+    ${glossary()}<button class="primary" id="go">${esc(T.cont)}</button>`);
   main.querySelector('.chips').addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); });
   document.getElementById('go').addEventListener('click', () => {
     // step 2: read
     const tRead = performance.now();
     screen(head + `<div class="card desc"><h2>${esc(T.descH)}</h2><p>${esc(describe(lang, s, cond))}</p></div>
-      <div class="card desc model"><p>${esc(describe(lang, s, 'model'))}</p></div><button class="primary" id="go">${esc(T.read)}</button>`, '.desc');
+      <div class="card desc model"><p>${esc(describe(lang, s, 'model'))}</p></div>${glossary()}<button class="primary" id="go">${esc(T.read)}</button>`, '.desc');
     document.getElementById('go').addEventListener('click', () => {
       // step 3: answer with the text hidden
       const readMs = Math.round(performance.now() - tRead), t0 = performance.now();
@@ -118,11 +119,21 @@ function trial(pos) {
             q1_answer: val('q1'), q1_correct: val('q1') === s.rule ? 1 : 0, q2_answer: val('q2'), q2_correct: val('q2') === s.order[0][0] ? 1 : 0,
             viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0) });
         }
-        if (practice) { if (pos.i + 1 < S.practice.length) trial({ practice: true, i: pos.i + 1 }); else ready(); return; }
+        if (practice) { feedback(s, val('q1'), val('q2'), () => { if (pos.i + 1 < S.practice.length) trial({ practice: true, i: pos.i + 1 }); else ready(); }); return; }
         if (pos.i + 1 < 6) trial({ b: pos.b, i: pos.i + 1 }); else rate(pos.b);
       });
     });
   });
+}
+// practice only: show the right answers with a short reason, so everyone understands the task before the study starts
+function feedback(s, a1, a2, next) {
+  const ok1 = a1 === s.rule, ok2 = a2 === s.order[0][0];
+  screen(`<h1>${esc(T.fbH)}</h1>
+    <div class="card fb ${ok1 ? 'ok' : 'no'}"><p><b>${esc(ok1 ? T.right : T.wrong)}</b> ${esc(T.fbQ1t(T.q1o[s.rule], T.fbQ1[s.rule]))}</p></div>
+    <div class="card fb ${ok2 ? 'ok' : 'no'}"><p><b>${esc(ok2 ? T.right : T.wrong)}</b> ${esc(T.fbQ2t(emo(lang, s.order[0][0]), emo(lang, s.model[0])))}</p></div>
+    <div class="card desc"><p class="muted">${esc(describe(lang, s, 'B'))}</p></div>
+    <button class="primary" id="go">${esc(T.cont)}</button>`);
+  document.getElementById('go').addEventListener('click', next);
 }
 function ready() {
   screen(`<h1>${esc(T.readyH)}</h1><div class="card"><p>${esc(T.ready)}</p></div><button class="primary" id="go">${esc(T.begin)}</button>`);

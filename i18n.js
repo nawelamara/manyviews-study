@@ -233,3 +233,53 @@ const UI = {
     sending: 'جارٍ حفظ إجاباتك…', failed: 'تعذّر إرسال إجاباتك. أبقِ هذه الصفحة مفتوحة وحاول مرة أخرى.', retry: 'حاول مرة أخرى',
   },
 };
+
+// ---- Added for participants outside the field: who the "earlier viewers" are, practice feedback, hard emotion words.
+const EXTRA = {
+  en: {
+    explain: 'For each painting, about 10 people looked at it before you and chose the emotions they felt. You will read a short description of their answers, and a guess made by a computer program (AI).',
+    fbH: 'Check your answer', right: 'Correct!', wrong: 'Not quite.',
+    fbQ1: { leader: 'one emotion was chosen by many more people than the others', varied: 'several emotions were chosen by similar numbers of people', few: 'too few people answered to be sure' },
+    fbQ1t: (ans, why) => `The right answer is “${ans}”, because ${why}.`,
+    fbQ2t: (v, m) => `Earlier viewers chose “${v}” most often. “${m}” was the AI's guess, not what the viewers chose.`,
+    gH: 'What do some emotion words mean?',
+    g: { humility: 'feeling modest, not proud', anticipation: 'waiting for or looking forward to something', trust: 'feeling you can rely on someone', agreeableness: 'feeling friendly and kind', disagreeableness: 'feeling unfriendly or hostile', arrogance: 'feeling better than others' },
+  },
+  'zh-Hant': {
+    explain: '每幅畫在您之前都有大約 10 個人看過，並選擇了他們的感受。您會讀到一段簡短的描述，說明他們的回答，以及一個電腦程式（AI）的猜測。',
+    fbH: '檢查您的答案', right: '答對了！', wrong: '不太對。',
+    fbQ1: { leader: '有一種情緒被選擇的人數明顯比其他情緒多', varied: '有幾種情緒被選擇的人數差不多', few: '作答的人太少，無法確定' },
+    fbQ1t: (ans, why) => `正確答案是「${ans}」，因為${why}。`,
+    fbQ2t: (v, m) => `之前的觀看者最常選擇${v}。${m}是 AI 的猜測，不是觀看者的選擇。`,
+    gH: '一些情緒詞是什麼意思？',
+    g: { humility: '感到謙虛，不驕傲', anticipation: '等待或期待某件事', trust: '覺得可以依靠某人', agreeableness: '感到友善、親切', disagreeableness: '感到不友善或有敵意', arrogance: '覺得自己比別人優越' },
+  },
+  'zh-Hans': {
+    explain: '每幅画在您之前都有大约 10 个人看过，并选择了他们的感受。您会读到一段简短的描述，说明他们的回答，以及一个电脑程序（AI）的猜测。',
+    fbH: '检查您的答案', right: '答对了！', wrong: '不太对。',
+    fbQ1: { leader: '有一种情绪被选择的人数明显比其他情绪多', varied: '有几种情绪被选择的人数差不多', few: '作答的人太少，无法确定' },
+    fbQ1t: (ans, why) => `正确答案是“${ans}”，因为${why}。`,
+    fbQ2t: (v, m) => `之前的观看者最常选择${v}。${m}是 AI 的猜测，不是观看者的选择。`,
+    gH: '一些情绪词是什么意思？',
+    g: { humility: '感到谦虚，不骄傲', anticipation: '等待或期待某件事', trust: '觉得可以依靠某人', agreeableness: '感到友善、亲切', disagreeableness: '感到不友善或有敌意', arrogance: '觉得自己比别人优越' },
+  },
+  fr: {
+    explain: 'Pour chaque tableau, une dizaine de personnes l’ont regardé avant vous et ont choisi les émotions qu’elles ressentaient. Vous lirez une courte description de leurs réponses, et une estimation faite par un programme informatique (IA).',
+    fbH: 'Vérifiez votre réponse', right: 'Correct !', wrong: 'Pas tout à fait.',
+    fbQ1: { leader: 'une émotion a été choisie par beaucoup plus de personnes que les autres', varied: 'plusieurs émotions ont été choisies par des nombres de personnes proches', few: 'trop peu de personnes ont répondu pour en être sûr' },
+    fbQ1t: (ans, why) => `La bonne réponse est « ${ans} », car ${why}.`,
+    fbQ2t: (v, m) => `Les spectateurs précédents ont choisi le plus souvent : ${v}. « ${m} » était l’estimation de l’IA, pas le choix des spectateurs.`,
+    gH: 'Que veulent dire certains mots d’émotion ?',
+    g: { humility: 'se sentir modeste, sans fierté', anticipation: 'attendre quelque chose ou s’en réjouir à l’avance', trust: 'sentir qu’on peut compter sur quelqu’un', agreeableness: 'se sentir aimable et bienveillant', disagreeableness: 'se sentir hostile ou peu aimable', arrogance: 'se sentir supérieur aux autres' },
+  },
+  ar: {
+    explain: 'لكل لوحة، شاهدها نحو 10 أشخاص قبلك واختاروا المشاعر التي شعروا بها. ستقرأ وصفًا قصيرًا لإجاباتهم، وتخمينًا من برنامج حاسوبي (ذكاء اصطناعي).',
+    fbH: 'تحقّق من إجابتك', right: 'إجابة صحيحة!', wrong: 'ليست صحيحة تمامًا.',
+    fbQ1: { leader: 'شعورًا واحدًا اختاره عدد أكبر بكثير من الناس مقارنةً بغيره', varied: 'عدة مشاعر اختارها أعداد متقاربة من الناس', few: 'عدد الذين أجابوا قليل جدًا للتأكد' },
+    fbQ1t: (ans, why) => `الإجابة الصحيحة هي «${ans}»، لأن ${why}.`,
+    fbQ2t: (v, m) => `اختار المشاهدون السابقون «${v}» أكثر من غيره. أما «${m}» فكان تخمين الذكاء الاصطناعي، وليس اختيار المشاهدين.`,
+    gH: 'ماذا تعني بعض كلمات المشاعر؟',
+    g: { humility: 'الشعور بالتواضع وعدم التكبّر', anticipation: 'انتظار شيء ما أو التطلّع إليه', trust: 'الشعور بأنه يمكن الاعتماد على شخص ما', agreeableness: 'الشعور بالود واللطف', disagreeableness: 'الشعور بعدم الود أو بالعداء', arrogance: 'الشعور بالتفوّق على الآخرين' },
+  },
+};
+Object.keys(EXTRA).forEach((l) => Object.assign(UI[l], EXTRA[l]));

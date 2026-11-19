@@ -46,3 +46,7 @@ fieldset input[type=radio] { width: 22px; height: 22px; flex: none; }
 ul.info { padding-inline-start: 20px; margin: 0; } ul.info li { margin: 6px 0; }
 [dir=rtl] body, [dir=rtl] main { text-align: right; }
 @media (max-width: 520px) { body { font-size: 17px; } .desc { font-size: 18px; } .frame { height: 40vh; } }
+details.gloss { margin: 4px 0 8px; font-size: 15px; color: var(--ink-2); }
+details.gloss summary { cursor: pointer; color: var(--purple); font-weight: 600; padding: 6px 0; }
+details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss li { margin: 3px 0; }
+.fb.ok { border-color: #8cc59a; background: #f1faf3; } .fb.no { border-color: #e6b8a2; background: #fdf4ef; }
