@@ -49,7 +49,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 104;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends + 11 feedback
+const TOTAL = 94;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends + 1 feedback page
 let keyHandler = null, lastIdx = 0;
 function screen(html, { focus, idx, back } = {}) {
   const dir = idx !== undefined && idx < lastIdx ? 'back' : 'fwd';
@@ -236,26 +236,38 @@ function rate(b) {
   cheer();
 }
 function sus() {
-  const items = T.sus.slice(0, 5).concat([T.attention], T.sus.slice(5));      // attention check after item 5
+  // the 10 usability questions (+ attention check after item 5) on ONE page, 1-5 buttons per row
+  const items = T.sus.slice(0, 5).concat([T.attention], T.sus.slice(5));
   const v = items.map(() => null);
-  const ask = (k) => scaleQ({ idx: 93 + k, n: 5, q: items[k], chosen: v[k], onBack: k > 0 ? () => ask(k - 1) : null,
-    head: `<span class="eyebrow">${esc(T.susH)} · ${k + 1} / ${items.length}</span>${k === 0 ? `<p class="kicker">${esc(T.susIntro)}</p>` : ''}`,
-    onPick: (x) => { v[k] = x; if (k + 1 < items.length) ask(k + 1); else submit(); } });
-  const submit = () => {
+  screen(`<h1>${esc(T.susH)}</h1><p class="kicker">${esc(T.susIntro)}</p>
+    <div class="suslist">${items.map((q, k) => `<div class="susrow card" data-k="${k}"><p class="susq"><span class="n">${k + 1}</span>${esc(q)}</p>
+      <div class="nums" role="radiogroup" aria-label="${esc(q)}">${[1, 2, 3, 4, 5].map((x) => `<button type="button" class="num" role="radio" aria-checked="false" data-v="${x}">${x}</button>`).join('')}</div>
+      <div class="ends"><span>${esc(T.dis)}</span><span>${esc(T.agr)}</span></div></div>`).join('')}</div>` +
+    actions(T.cont, { disabled: true, extra: `<span class="left" id="left"></span>` }), { idx: 93, focus: 'h1' });
+  const left = () => { const n = v.filter((x) => x === null).length; $('left').textContent = n ? `${items.length - n} / ${items.length}` : ''; $('go').disabled = n > 0; };
+  main.querySelectorAll('.susrow').forEach((row) => row.addEventListener('click', (e) => {
+    const b = e.target.closest('.num'); if (!b) return;
+    const k = +row.dataset.k; v[k] = +b.dataset.v;
+    row.querySelectorAll('.num').forEach((t) => t.setAttribute('aria-checked', String(t === b)));
+    row.classList.add('answered'); left();
+    const next = row.nextElementSibling;          // gently bring the next question into view
+    if (next && v[k + 1] === null) setTimeout(() => next.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+  }));
+  left();
+  $('go').addEventListener('click', () => {
     const att = v[5], sv = v.slice(0, 5).concat(v.slice(6));
     sv.forEach((x, k) => sess.rows.push({ type: 'sus', item: `sus${k + 1}`, value: x }));
     sess.rows.push({ type: 'sus', item: 'sus_score', value: 2.5 * sv.reduce((s, x, k) => s + (k % 2 === 0 ? x - 1 : 5 - x), 0) });
     sess.rows.push({ type: 'check', item: 'attention_pass', value: att === 2 ? 1 : 0 });
     sess.finished = new Date().toISOString();
     finish();
-  };
-  ask(0);
+  });
 }
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 103 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 93 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 103 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 93 });
     $('go').addEventListener('click', finish); return;
   }
   const shareUrl = location.origin + location.pathname;
