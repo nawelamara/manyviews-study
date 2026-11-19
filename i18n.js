@@ -283,3 +283,88 @@ const EXTRA = {
   },
 };
 Object.keys(EXTRA).forEach((l) => Object.assign(UI[l], EXTRA[l]));
+
+// ---- Friendlier design: landing page, part breaks, try again in the practice, sharing at the end.
+const EXTRA2 = {
+  en: { sub: 'Look at paintings, read what other people felt, and help us test better art descriptions.', pills: ['About 20 minutes', 'Anonymous', 'No art knowledge needed'],
+    partDone: (k) => `Part ${k} of 3 done!`, cheer: ['Nice start. Two quick questions, then the next part.', 'Two-thirds done. Two quick questions, then the last part.', 'Last part done. Two quick questions, then a short final page.'],
+    tryAgain: 'Read it again and try again', share: 'Share the study', copied: 'Link copied!', shareText: 'A 20-minute study about how people feel about paintings:' },
+  'zh-Hant': { sub: '欣賞畫作、閱讀其他人的感受，幫助我們測試更好的藝術描述。', pills: ['約 20 分鐘', '匿名', '不需要藝術知識'],
+    partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的開始！回答兩個簡短問題後進入下一部分。', '已完成三分之二！回答兩個簡短問題後進入最後一部分。', '最後一部分完成！回答兩個簡短問題，然後是最後一頁。'],
+    tryAgain: '再讀一次並重新作答', share: '分享這項研究', copied: '已複製連結！', shareText: '一項約 20 分鐘、關於人們對畫作感受的研究：' },
+  'zh-Hans': { sub: '欣赏画作、阅读其他人的感受，帮助我们测试更好的艺术描述。', pills: ['约 20 分钟', '匿名', '不需要艺术知识'],
+    partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的开始！回答两个简短问题后进入下一部分。', '已完成三分之二！回答两个简短问题后进入最后一部分。', '最后一部分完成！回答两个简短问题，然后是最后一页。'],
+    tryAgain: '再读一次并重新作答', share: '分享这项研究', copied: '已复制链接！', shareText: '一项约 20 分钟、关于人们对画作感受的研究：' },
+  fr: { sub: 'Regardez des tableaux, lisez ce que d’autres personnes ont ressenti, et aidez-nous à tester de meilleures descriptions.', pills: ['Environ 20 minutes', 'Anonyme', 'Aucune connaissance en art requise'],
+    partDone: (k) => `Partie ${k} sur 3 terminée !`, cheer: ['Bon début. Deux petites questions, puis la partie suivante.', 'Deux tiers terminés. Deux petites questions, puis la dernière partie.', 'Dernière partie terminée. Deux petites questions, puis une courte page finale.'],
+    tryAgain: 'Relire et réessayer', share: 'Partager l’étude', copied: 'Lien copié !', shareText: 'Une étude de 20 minutes sur ce que les gens ressentent devant des tableaux :' },
+  ar: { sub: 'شاهد لوحات فنية، واقرأ ما شعر به الآخرون، وساعدنا في اختبار أوصاف أفضل للفن.', pills: ['نحو 20 دقيقة', 'مجهول الهوية', 'لا تحتاج إلى معرفة بالفن'],
+    partDone: (k) => `انتهى الجزء ${k} من 3!`, cheer: ['بداية رائعة. سؤالان قصيران ثم الجزء التالي.', 'أنجزت الثلثين. سؤالان قصيران ثم الجزء الأخير.', 'انتهى الجزء الأخير. سؤالان قصيران ثم صفحة أخيرة قصيرة.'],
+    tryAgain: 'اقرأ مرة أخرى وأعد المحاولة', share: 'شارك الدراسة', copied: 'تم نسخ الرابط!', shareText: 'دراسة مدتها 20 دقيقة حول ما يشعر به الناس أمام اللوحات:' },
+};
+Object.keys(EXTRA2).forEach((l) => Object.assign(UI[l], EXTRA2[l]));
+
+// ---- Simpler wording + texts for the friendlier design (Nov 2026). Same meaning and same answer options as before.
+const SIMPLE = {
+  en: {
+    welcomeSub: 'About 20 minutes · anonymous · no right or wrong feelings', letsGo: "Let's go",
+    explain: 'Each painting was seen by about 10 people before you. They picked the feelings it gave them.',
+    steps: [['👀', 'Look', 'Look at the painting.'], ['📖', 'Read', 'Read a short description of how the people before you felt, plus a guess from an AI.'], ['✅', 'Answer', 'Answer two simple questions. The description is hidden then, so read it well.']],
+    feel: 'How does this painting make you feel? Tap any feelings (optional).',
+    q1: 'How did the people before you feel about this painting?',
+    q1o: { leader: 'One feeling stood out', varied: 'People felt many different things', few: 'Too few people answered to know', dontknow: "I'm not sure" },
+    q2: 'Which feeling did they pick the most?', dontknow: "I'm not sure",
+    good: "Great, you've got it!", hmm: "Almost! Here's the right answer:", tryAgain: 'Read it again',
+    blockDone: (b) => `Part ${b} of 3 done!`, rateIntro: 'Two quick questions about the descriptions you just read:',
+    r1: 'The descriptions left room for my own feelings.', susH: 'Quick feedback about this website', back: 'Back', endH: 'Thank you! 🎉',
+  },
+  'zh-Hant': {
+    welcomeSub: '約 20 分鐘・匿名・感受沒有對錯', letsGo: '開始吧',
+    explain: '每幅畫在您之前大約有 10 個人看過，他們選出了這幅畫帶給他們的感受。',
+    steps: [['👀', '看', '看看這幅畫。'], ['📖', '讀', '讀一段簡短描述，說明之前的人有什麼感受，以及一個 AI 的猜測。'], ['✅', '答', '回答兩個簡單問題。這時描述會被隱藏，請仔細閱讀。']],
+    feel: '這幅畫帶給您什麼感受？點選任何感受（可略過）。',
+    q1: '在您之前的人對這幅畫有什麼感受？',
+    q1o: { leader: '有一種感受特別突出', varied: '大家的感受很不一樣', few: '回答的人太少，無法知道', dontknow: '我不確定' },
+    q2: '他們最常選擇哪一種感受？', dontknow: '我不確定',
+    good: '太好了，您掌握了！', hmm: '差一點！正確答案是：', tryAgain: '再讀一次',
+    blockDone: (b) => `第 ${b} 部分完成（共 3 部分）！`, rateIntro: '關於剛才讀到的描述，有兩個簡短問題：',
+    r1: '這些描述讓我保有自己感受的空間。', susH: '關於這個網站的簡短回饋', back: '返回', endH: '謝謝您！🎉',
+  },
+  'zh-Hans': {
+    welcomeSub: '约 20 分钟・匿名・感受没有对错', letsGo: '开始吧',
+    explain: '每幅画在您之前大约有 10 个人看过，他们选出了这幅画带给他们的感受。',
+    steps: [['👀', '看', '看看这幅画。'], ['📖', '读', '读一段简短描述，说明之前的人有什么感受，以及一个 AI 的猜测。'], ['✅', '答', '回答两个简单问题。这时描述会被隐藏，请仔细阅读。']],
+    feel: '这幅画带给您什么感受？点选任何感受（可跳过）。',
+    q1: '在您之前的人对这幅画有什么感受？',
+    q1o: { leader: '有一种感受特别突出', varied: '大家的感受很不一样', few: '回答的人太少，无法知道', dontknow: '我不确定' },
+    q2: '他们最常选择哪一种感受？', dontknow: '我不确定',
+    good: '太好了，您掌握了！', hmm: '差一点！正确答案是：', tryAgain: '再读一次',
+    blockDone: (b) => `第 ${b} 部分完成（共 3 部分）！`, rateIntro: '关于刚才读到的描述，有两个简短问题：',
+    r1: '这些描述让我保有自己感受的空间。', susH: '关于这个网站的简短反馈', back: '返回', endH: '谢谢您！🎉',
+  },
+  fr: {
+    welcomeSub: 'Environ 20 minutes · anonyme · pas de bon ou de mauvais ressenti', letsGo: 'C’est parti',
+    explain: 'Chaque tableau a été regardé par une dizaine de personnes avant vous. Elles ont choisi ce qu’elles ressentaient.',
+    steps: [['👀', 'Regarder', 'Regardez le tableau.'], ['📖', 'Lire', 'Lisez une courte description de ce qu’ont ressenti les personnes avant vous, et une estimation d’une IA.'], ['✅', 'Répondre', 'Répondez à deux questions simples. La description est alors cachée : lisez-la bien.']],
+    feel: 'Que vous fait ressentir ce tableau ? Touchez les émotions qui vous parlent (facultatif).',
+    q1: 'Qu’ont ressenti les personnes avant vous devant ce tableau ?',
+    q1o: { leader: 'Un sentiment se démarquait', varied: 'Les gens ont ressenti des choses très différentes', few: 'Trop peu de réponses pour le savoir', dontknow: 'Je ne suis pas sûr(e)' },
+    q2: 'Quel sentiment ont-ils choisi le plus ?', dontknow: 'Je ne suis pas sûr(e)',
+    good: 'Bravo, vous avez compris !', hmm: 'Presque ! Voici la bonne réponse :', tryAgain: 'Relire',
+    blockDone: (b) => `Partie ${b} sur 3 terminée !`, rateIntro: 'Deux petites questions sur les descriptions que vous venez de lire :',
+    r1: 'Les descriptions laissaient de la place à mes propres sentiments.', susH: 'Votre avis rapide sur ce site', back: 'Retour', endH: 'Merci ! 🎉',
+  },
+  ar: {
+    welcomeSub: 'حوالي 20 دقيقة · مجهول الهوية · لا توجد مشاعر صحيحة أو خاطئة', letsGo: 'لنبدأ',
+    explain: 'كل لوحة شاهدها نحو 10 أشخاص قبلك، واختاروا المشاعر التي أثارتها فيهم.',
+    steps: [['👀', 'انظر', 'انظر إلى اللوحة.'], ['📖', 'اقرأ', 'اقرأ وصفًا قصيرًا لما شعر به الأشخاص قبلك، وتخمينًا من الذكاء الاصطناعي.'], ['✅', 'أجب', 'أجب عن سؤالين بسيطين. سيُخفى الوصف عندها، لذا اقرأه جيدًا.']],
+    feel: 'بماذا تشعر أمام هذه اللوحة؟ اضغط على أي شعور (اختياري).',
+    q1: 'بماذا شعر الأشخاص الذين شاهدوا هذه اللوحة قبلك؟',
+    q1o: { leader: 'برز شعور واحد', varied: 'شعر الناس بأشياء مختلفة كثيرًا', few: 'أجاب عدد قليل جدًا لمعرفة ذلك', dontknow: 'لست متأكدًا' },
+    q2: 'ما الشعور الذي اختاروه أكثر من غيره؟', dontknow: 'لست متأكدًا',
+    good: 'رائع، لقد فهمت!', hmm: 'اقتربت! إليك الإجابة الصحيحة:', tryAgain: 'اقرأ مرة أخرى',
+    blockDone: (b) => `انتهى الجزء ${b} من 3!`, rateIntro: 'سؤالان سريعان عن الأوصاف التي قرأتها للتو:',
+    r1: 'تركت الأوصاف مجالًا لمشاعري الخاصة.', susH: 'رأيك السريع في هذا الموقع', back: 'رجوع', endH: 'شكرًا لك! 🎉',
+  },
+};
+Object.keys(SIMPLE).forEach((l) => Object.assign(UI[l], SIMPLE[l]));
