@@ -20,6 +20,8 @@ const FMT = {
 };
 
 // The three descriptions (A, B, C) and the model prediction, built from the painting's data.
+const POSITIVE = ['gratitude', 'happiness', 'humility', 'love', 'optimism', 'trust'];
+const NEGATIVE = ['anger', 'arrogance', 'disgust', 'fear', 'pessimism', 'regret', 'sadness', 'shame'];
 function describe(lang, s, cond) {
   const E = (f) => emo(lang, f), F = FMT[lang], n = s.n;
   const cnts = (xs) => F.list(xs.map(([f, c]) => F.cnt(E(f), c, n)));
@@ -28,7 +30,7 @@ function describe(lang, s, cond) {
       A: () => `This painting evokes ${E(s.order[0][0])}.`,
       B: () => `Viewers selected ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `More viewers selected ${cnts([s.order[0]])}, although some selected other emotions, such as ${cnts(s.order.slice(1, 3))}.`,
-      varied: () => `Viewer responses varied. Here are several different reactions: ${cnts(s.order)}.`,
+      varied: () => `Viewer responses varied. The three most frequent were ${cnts(s.order.slice(0, 3))}.`,
       few: () => `Only ${s.nEmotion < n ? `${s.nEmotion} of the ${n} viewers selected an emotion` : `${n} viewers responded`}, so the available data are insufficient to determine reliably whether viewers agree. They selected ${cnts(s.order.slice(0, 3))}.`,
       opp: ' Some of these emotions point in opposite directions (positive and negative).',
       model: () => `Model prediction (an AI estimate, not what viewers selected): mostly ${E(s.model[0])}, with some ${E(s.model[1])} and ${E(s.model[2])}.`,
@@ -37,7 +39,7 @@ function describe(lang, s, cond) {
       A: () => `這幅畫喚起${E(s.order[0][0])}。`,
       B: () => `觀看者選擇了${cnts(s.order.slice(0, 3))}。`,
       leader: () => `較多觀看者選擇了${cnts([s.order[0]])}，不過也有人選擇了其他情緒，例如${cnts(s.order.slice(1, 3))}。`,
-      varied: () => `觀看者的反應各不相同。以下是幾種不同的反應：${cnts(s.order)}。`,
+      varied: () => `觀看者的反應各不相同。最常見的三種是${cnts(s.order.slice(0, 3))}。`,
       few: () => `${s.nEmotion < n ? `${n} 位觀看者中只有 ${s.nEmotion} 位選擇了情緒` : `只有 ${n} 位觀看者作答`}，資料不足以可靠判斷觀看者的意見是否一致。他們選擇了${cnts(s.order.slice(0, 3))}。`,
       opp: '其中一些情緒的方向相反（正面與負面）。',
       model: () => `模型預測（AI 的估計，不是觀看者的選擇）：主要是${E(s.model[0])}，也有一些${E(s.model[1])}和${E(s.model[2])}。`,
@@ -46,7 +48,7 @@ function describe(lang, s, cond) {
       A: () => `Ce tableau évoque : ${E(s.order[0][0])}.`,
       B: () => `Les spectateurs ont choisi : ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `Davantage de spectateurs ont choisi ${cnts([s.order[0]])}, même si certains ont choisi d’autres émotions, par exemple ${cnts(s.order.slice(1, 3))}.`,
-      varied: () => `Les réactions des spectateurs ont varié. Voici plusieurs réactions différentes : ${cnts(s.order)}.`,
+      varied: () => `Les réactions des spectateurs ont varié. Les trois plus fréquentes : ${cnts(s.order.slice(0, 3))}.`,
       few: () => `${s.nEmotion < n ? `Seuls ${s.nEmotion} des ${n} spectateurs ont choisi une émotion` : `Seuls ${n} spectateurs ont répondu`} ; les données ne suffisent donc pas pour savoir de façon fiable si les spectateurs sont d’accord. Ils ont choisi : ${cnts(s.order.slice(0, 3))}.`,
       opp: ' Certaines de ces émotions vont dans des directions opposées (positive et négative).',
       model: () => `Prédiction du modèle (une estimation de l’IA, pas le choix des spectateurs) : surtout ${E(s.model[0])}, avec un peu de ${E(s.model[1])} et de ${E(s.model[2])}.`,
@@ -55,7 +57,7 @@ function describe(lang, s, cond) {
       A: () => `المشاعر التي تثيرها هذه اللوحة: ${E(s.order[0][0])}.`,
       B: () => `اختار المشاهدون: ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `اختار عدد أكبر من المشاهدين ${cnts([s.order[0]])}، مع أن بعضهم اختار مشاعر أخرى، مثل ${cnts(s.order.slice(1, 3))}.`,
-      varied: () => `تنوّعت ردود فعل المشاهدين. إليك عدة ردود مختلفة: ${cnts(s.order)}.`,
+      varied: () => `تنوّعت ردود فعل المشاهدين. وكانت الثلاثة الأكثر تكرارًا: ${cnts(s.order.slice(0, 3))}.`,
       few: () => `${s.nEmotion < n ? `اختار ${s.nEmotion} فقط من أصل ${n} مشاهدين شعورًا ما` : `أجاب ${n} مشاهدين فقط`}، لذلك لا تكفي البيانات لمعرفة ما إذا كان المشاهدون متفقين بشكل موثوق. وقد اختاروا: ${cnts(s.order.slice(0, 3))}.`,
       opp: ' بعض هذه المشاعر في اتجاهين متعاكسين (إيجابي وسلبي).',
       model: () => `توقّع النموذج (تقدير من الذكاء الاصطناعي، وليس ما اختاره المشاهدون): غالبًا ${E(s.model[0])}، مع بعض ${E(s.model[1])} و${E(s.model[2])}.`,
@@ -64,7 +66,11 @@ function describe(lang, s, cond) {
   if (cond === 'model') return T.model();
   if (cond === 'A') return T.A();
   if (cond === 'B') return T.B();
-  return T[s.rule]() + (s.opposite ? T.opp : '');
+  // C never lists more than 3 emotions (same amount of information as B); the 'opposite directions' sentence is
+  // added only when the 3 emotions shown include both a positive and a negative one.
+  const shown = s.order.slice(0, 3).map(([f]) => f);
+  const opp = shown.some((f) => POSITIVE.includes(f)) && shown.some((f) => NEGATIVE.includes(f));
+  return T[s.rule]() + (opp ? T.opp : '');
 }
 
 const UI = {
@@ -73,7 +79,7 @@ const UI = {
     chooseLang: 'Choose your language', next: 'Next', cont: 'Continue', read: 'I have read it', start: 'Start',
     infoH: 'About this study',
     info: ['This is a research study by the AI and New Media Art Laboratory, National Taichung University of Education (Taiwan).',
-      'It tests different ways of describing how people felt about paintings. You will look at 20 paintings, read short descriptions and answer simple questions. It takes about 20–25 minutes.',
+      'It tests different ways of describing how people felt about paintings. You will look at 20 paintings, read short descriptions and answer simple questions. It takes about 20 minutes.',
       'There are no right or wrong feelings. The questions only ask about what you read.',
       'Taking part is voluntary. You can stop at any time by closing the page; nothing is kept from an unfinished session except the answers already sent.',
       'We do not ask for your name, e-mail or any personal information. Your answers are anonymous and used only for research.',
@@ -104,7 +110,7 @@ const UI = {
     chooseLang: '請選擇語言', next: '下一步', cont: '繼續', read: '我已閱讀', start: '開始',
     infoH: '關於本研究',
     info: ['這是國立臺中教育大學（臺灣）人工智慧與新媒體藝術實驗室的研究。',
-      '本研究比較描述「人們對畫作的感受」的不同方式。您將觀看 20 幅畫作、閱讀簡短描述並回答簡單問題，約需 20–25 分鐘。',
+      '本研究比較描述「人們對畫作的感受」的不同方式。您將觀看 20 幅畫作、閱讀簡短描述並回答簡單問題，約需 20 分鐘。',
       '感受沒有對錯之分，問題只詢問您所讀到的內容。',
       '參與完全自願。您可隨時關閉頁面停止參與；未完成的作答除了已送出的答案外不會保留。',
       '我們不會詢問您的姓名、電子郵件或任何個人資料。您的回答是匿名的，僅用於研究。',
@@ -134,7 +140,7 @@ const UI = {
     chooseLang: 'Choisissez votre langue', next: 'Suivant', cont: 'Continuer', read: 'J’ai lu', start: 'Commencer',
     infoH: 'À propos de cette étude',
     info: ['Cette étude est menée par le laboratoire IA et arts des nouveaux médias de l’Université nationale d’éducation de Taichung (Taïwan).',
-      'Elle compare différentes façons de décrire ce que des personnes ont ressenti devant des tableaux. Vous verrez 20 tableaux, lirez de courtes descriptions et répondrez à des questions simples. Cela prend environ 20 à 25 minutes.',
+      'Elle compare différentes façons de décrire ce que des personnes ont ressenti devant des tableaux. Vous verrez 20 tableaux, lirez de courtes descriptions et répondrez à des questions simples. Cela prend environ 20 minutes.',
       'Il n’y a pas de bons ou de mauvais ressentis. Les questions portent seulement sur ce que vous avez lu.',
       'La participation est volontaire. Vous pouvez arrêter à tout moment en fermant la page ; d’une session inachevée, seules les réponses déjà envoyées sont conservées.',
       'Nous ne demandons ni votre nom, ni votre e-mail, ni aucune information personnelle. Vos réponses sont anonymes et servent uniquement à la recherche.',
@@ -165,7 +171,7 @@ const UI = {
     chooseLang: 'اختر لغتك', next: 'التالي', cont: 'متابعة', read: 'قرأتُ النص', start: 'ابدأ',
     infoH: 'عن هذه الدراسة',
     info: ['هذه دراسة بحثية يجريها مختبر الذكاء الاصطناعي وفنون الوسائط الجديدة في جامعة تايتشونغ الوطنية للتربية (تايوان).',
-      'تقارن الدراسة بين طرق مختلفة لوصف ما شعر به الناس أمام اللوحات. ستشاهد 20 لوحة وتقرأ أوصافًا قصيرة وتجيب عن أسئلة بسيطة. تستغرق نحو 20–25 دقيقة.',
+      'تقارن الدراسة بين طرق مختلفة لوصف ما شعر به الناس أمام اللوحات. ستشاهد 20 لوحة وتقرأ أوصافًا قصيرة وتجيب عن أسئلة بسيطة. تستغرق نحو 20 دقيقة.',
       'لا توجد مشاعر صحيحة أو خاطئة. الأسئلة تتعلق فقط بما قرأته.',
       'المشاركة طوعية. يمكنك التوقف في أي وقت بإغلاق الصفحة؛ ولا يُحتفظ من الجلسة غير المكتملة إلا بالإجابات التي أُرسلت.',
       'لا نطلب اسمك أو بريدك الإلكتروني أو أي معلومات شخصية. إجاباتك مجهولة الهوية وتُستخدم للبحث فقط.',
@@ -237,16 +243,16 @@ Object.keys(EXTRA).forEach((l) => Object.assign(UI[l], EXTRA[l]));
 // ---- Friendlier design: landing page, part breaks, try again in the practice, sharing at the end.
 const EXTRA2 = {
   en: { studyWord: 'Research study', zoom: 'See the painting bigger', sub: 'Look at paintings, read what other people felt, and help us test better art descriptions.', pills: ['About 20 minutes', 'Anonymous', 'No art knowledge needed'],
-    partDone: (k) => `Part ${k} of 3 done!`, cheer: ['Nice start. Two quick questions, then the next part.', 'Two-thirds done. Two quick questions, then the last part.', 'Last part done. Two quick questions, then a short final page.'],
+    partDone: (k) => `Part ${k} of 3 done!`, cheer: ['Nice start. Two quick questions, then the next part.', 'Two-thirds done. Three quick questions, then the last part.', 'Last part done. Two quick questions and you are finished!'],
     tryAgain: 'Read it again and try again', share: 'Share the study', copied: 'Link copied!', shareText: 'A 20-minute study about how people feel about paintings:' },
   'zh-Hant': { studyWord: '研究問卷', zoom: '放大看這幅畫', sub: '欣賞畫作、閱讀其他人的感受，幫助我們測試更好的藝術描述。', pills: ['約 20 分鐘', '匿名', '不需要藝術知識'],
-    partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的開始！回答兩個簡短問題後進入下一部分。', '已完成三分之二！回答兩個簡短問題後進入最後一部分。', '最後一部分完成！回答兩個簡短問題，然後是最後一頁。'],
+    partDone: (k) => `第 ${k} 部分（共 3 部分）完成！`, cheer: ['好的開始！回答兩個簡短問題後進入下一部分。', '已完成三分之二！回答三個簡短問題後進入最後一部分。', '最後一部分完成！回答兩個簡短問題就結束了！'],
     tryAgain: '再讀一次並重新作答', share: '分享這項研究', copied: '已複製連結！', shareText: '一項約 20 分鐘、關於人們對畫作感受的研究：' },
   fr: { studyWord: 'Étude de recherche', zoom: 'Voir le tableau en plus grand', sub: 'Regardez des tableaux, lisez ce que d’autres personnes ont ressenti, et aidez-nous à tester de meilleures descriptions.', pills: ['Environ 20 minutes', 'Anonyme', 'Aucune connaissance en art requise'],
-    partDone: (k) => `Partie ${k} sur 3 terminée !`, cheer: ['Bon début. Deux petites questions, puis la partie suivante.', 'Deux tiers terminés. Deux petites questions, puis la dernière partie.', 'Dernière partie terminée. Deux petites questions, puis une courte page finale.'],
+    partDone: (k) => `Partie ${k} sur 3 terminée !`, cheer: ['Bon début. Deux petites questions, puis la partie suivante.', 'Deux tiers terminés. Trois petites questions, puis la dernière partie.', 'Dernière partie terminée. Deux petites questions et c’est fini !'],
     tryAgain: 'Relire et réessayer', share: 'Partager l’étude', copied: 'Lien copié !', shareText: 'Une étude de 20 minutes sur ce que les gens ressentent devant des tableaux :' },
   ar: { studyWord: 'دراسة بحثية', zoom: 'عرض اللوحة بحجم أكبر', sub: 'شاهد لوحات فنية، واقرأ ما شعر به الآخرون، وساعدنا في اختبار أوصاف أفضل للفن.', pills: ['نحو 20 دقيقة', 'مجهول الهوية', 'لا تحتاج إلى معرفة بالفن'],
-    partDone: (k) => `انتهى الجزء ${k} من 3!`, cheer: ['بداية رائعة. سؤالان قصيران ثم الجزء التالي.', 'أنجزت الثلثين. سؤالان قصيران ثم الجزء الأخير.', 'انتهى الجزء الأخير. سؤالان قصيران ثم صفحة أخيرة قصيرة.'],
+    partDone: (k) => `انتهى الجزء ${k} من 3!`, cheer: ['بداية رائعة. سؤالان قصيران ثم الجزء التالي.', 'أنجزت الثلثين. ثلاثة أسئلة قصيرة ثم الجزء الأخير.', 'انتهى الجزء الأخير. سؤالان قصيران وتنتهي الدراسة!'],
     tryAgain: 'اقرأ مرة أخرى وأعد المحاولة', share: 'شارك الدراسة', copied: 'تم نسخ الرابط!', shareText: 'دراسة مدتها 20 دقيقة حول ما يشعر به الناس أمام اللوحات:' },
 };
 Object.keys(EXTRA2).forEach((l) => Object.assign(UI[l], EXTRA2[l]));

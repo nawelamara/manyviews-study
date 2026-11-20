@@ -13,7 +13,7 @@ import pandas as pd
 
 d = pd.read_csv(sys.argv[1])
 d = d.drop_duplicates(["session_id", "type", "position", "block", "item"])
-fin = d.loc[(d["type"] == "sus") & (d["item"] == "sus_score"), "session_id"].unique()
+fin = d.loc[(d["type"] == "rating") & (pd.to_numeric(d["block"], errors="coerce") == 3), "session_id"].unique()   # rated part 3 = finished
 d = d[d["session_id"].isin(fin)]                         # finished sessions only
 if "type" in d and (d["type"] == "check").any():          # online version: drop sessions that failed the attention check
     fail = d.loc[(d["type"] == "check") & (d["item"] == "attention_pass") & (d["value"].astype(float) == 0), "session_id"].unique()
@@ -35,8 +35,6 @@ print(t.pivot_table(index="category", columns="condition", values="q1_correct", 
 r = d[d["type"] == "rating"]
 print("\nRatings (1-7), mean by condition:")
 print(r.assign(value=r["value"].astype(float)).pivot_table(index="item", columns="condition", values="value", aggfunc="mean").round(2))
-s = d[(d["type"] == "sus") & (d["item"] == "sus_score")]["value"].astype(float)
-print(f"\nSUS score: mean {s.mean():.1f}, range {s.min():.0f}-{s.max():.0f} (n = {len(s)})")
 
 try:
     from scipy import stats

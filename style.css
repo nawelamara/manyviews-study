@@ -192,7 +192,7 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
   body { font-size: 17px; } main { padding: 12px 16px 24px; } .actions { margin-inline: -16px; padding-inline: 16px; }
   .top { padding: 12px 12px 8px; } .brand { font-size: 18px; } .backbtn { padding: 0 12px; } #topback-t { display: none; }
   .lang select { max-width: 104px; }
-  .desc { font-size: 18px; } .frame { height: 56vh; margin: 0 -8px; } .frame.small { height: 34vh; }
+  .desc { font-size: 18px; } .frame { height: 56vh; margin: 0 -8px; } .frame.small { height: 30vh; }
   .tile { font-size: 17px; min-height: 60px; } .collage { height: 124px; } .collage img { width: 76px; height: 106px; }
   .primary, .secondary { min-height: 54px; } .secondary { flex-basis: 140px; }
   .nums { gap: 5px; } .num { font-size: 18px; height: 52px; border-radius: 12px; }

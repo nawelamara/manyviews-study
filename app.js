@@ -49,7 +49,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 94;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends + 1 feedback page
+const TOTAL = 73;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
 let keyHandler = null, lastIdx = 0;
 function screen(html, { focus, idx, back } = {}) {
   const dir = idx !== undefined && idx < lastIdx ? 'back' : 'fwd';
@@ -140,7 +140,7 @@ function welcome() {
   main.querySelectorAll('[data-l]').forEach((b) => b.addEventListener('click', () => { setLang(b.dataset.l); consent(); }));
 }
 function consent() {
-  screen(`<span class="eyebrow">1 / 3</span><h1>${esc(T.infoH)}</h1><div class="card"><ul class="info">${T.info.map((x, i) => `<li><span aria-hidden="true">${['🏛', '🖼', '💬', '🚪', '🔒', '🔞'][i] || '•'}</span><span>${esc(x)}</span></li>`).join('')}</ul>
+  screen(`<h1>${esc(T.infoH)}</h1><div class="card"><ul class="info">${T.info.map((x, i) => `<li><span aria-hidden="true">${['🏛', '🖼', '💬', '🚪', '🔒', '🔞'][i] || '•'}</span><span>${esc(x)}</span></li>`).join('')}</ul>
     ${C.CONTACT ? `<p class="muted contact">✉️ ${esc(T.contact)}<a href="mailto:${esc(C.CONTACT)}">${esc(C.CONTACT)}</a></p>` : ''}</div>
     <label class="toggle"><input type="checkbox" id="c-age"><span class="sw" aria-hidden="true"></span><span>${esc(T.age)}</span></label>
     <label class="toggle"><input type="checkbox" id="c-agree"><span class="sw" aria-hidden="true"></span><span>${esc(T.agree)}</span></label>` +
@@ -157,7 +157,7 @@ function consent() {
   });
 }
 function intro() {
-  screen(`<span class="eyebrow">2 / 3</span><h1>${esc(T.introH)}</h1><p class="lead">${esc(T.explain)}</p>
+  screen(`<h1>${esc(T.introH)}</h1><p class="lead">${esc(T.explain)}</p>
     <ol class="steps">${T.steps.map(([ic, h, t], i) => `<li class="step"><span class="ic" aria-hidden="true">${ic}</span><div><b><span class="n">${i + 1}</span> ${esc(h)}</b><p>${esc(t)}</p></div></li>`).join('')}</ol>
     <p class="center muted">${esc(T.introEnd)}</p>` + actions(T.startPractice), { idx: 2, back: consent });
   $('go').addEventListener('click', () => trial({ practice: true, i: 0 }));
@@ -165,40 +165,33 @@ function intro() {
 function trial(pos) {
   const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
-  const base = practice ? 3 + pos.i * 4 : 12 + pos.b * 27 + pos.i * 4;
+  const base = practice ? 3 + pos.i * 3 : 10 + pos.b * 21 + pos.i * 3;
   const head = progress(k, total, practice);
-  // 1. look (optional feelings, not saved)
-  const look = () => {
-    screen(head + picture(s) + `<p class="prompt">${esc(T.feel)}</p><div class="chips">${FEELINGS.map((f) => emo(lang, f)).sort((a, b) => a.localeCompare(b, lang)).concat([emo(lang, 'none')])
-      .map((e) => `<button type="button" class="chip" aria-pressed="false">${esc(e)}</button>`).join('')}</div>${glossary()}` + actions(T.cont), { idx: base });
-    main.querySelector('.chips').addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); });
-    $('go').addEventListener('click', read);
-  };
-  // 2. read
+  // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
   const read = () => {
     const tRead = performance.now();
     screen(head + picture(s, true) + `<div class="card desc"><span class="tag">📝 ${esc(T.descH)}</span><p>${esc(describe(lang, s, cond))}</p></div>
       <div class="card desc model"><span class="tag">🤖 AI</span><p>${esc(describe(lang, s, 'model'))}</p></div>${glossary()}` + actions(T.read),
-    { focus: '.desc', idx: base + 1 });
+    { focus: '.desc', idx: base });
     $('go').addEventListener('click', () => { readMs += Math.round(performance.now() - tRead); t0 = performance.now(); ask1(); });
   };
-  // 3. two questions, one per screen (the description is hidden now)
+  // 2. two questions, one per screen (the description is hidden now)
   let a1 = null, a2 = null;
   const r = rng(7 + sess.p * 100 + (practice ? pos.i : 10 + k));
   const q2opts = shuffle([s.order[0][0], s.model[0]], r);
-  const ask1 = () => choice({ idx: base + 2, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'few', 'dontknow'].map((v) => [v, T.q1o[v]]),
+  const ask1 = () => choice({ idx: base + 1, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'few', 'dontknow'].map((v) => [v, T.q1o[v]]),
     onPick: (v) => { a1 = v; ask2(); } });
-  const ask2 = () => choice({ idx: base + 3, head, q: T.q2, chosen: a2, options: q2opts.map((f) => [f, emo(lang, f)]).concat([['dontknow', T.dontknow]]),
+  const ask2 = () => choice({ idx: base + 2, head, q: T.q2, chosen: a2, options: q2opts.map((f) => [f, emo(lang, f)]).concat([['dontknow', T.dontknow]]),
     onBack: ask1, onPick: (v) => { a2 = v; done(); } });
   const done = () => {
-    if (practice) { feedback(s, a1, a2, base + 3, () => { a1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
+    if (practice) { feedback(s, a1, a2, base + 2, () => { a1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
     sess.rows.push({ type: 'trial', block: pos.b + 1, position: k, condition: cond, painting: s.id, category: s.rule,
       q1_answer: a1, q1_correct: a1 === s.rule ? 1 : 0, q2_answer: a2, q2_correct: a2 === s.order[0][0] ? 1 : 0,
       viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0) });
     if (pos.i + 1 < 6) trial({ b: pos.b, i: pos.i + 1 }); else rate(pos.b);
   };
-  look();
+  read();
 }
 // practice only: show the right answers, and let people read the description again and retry
 function feedback(s, a1, a2, idx, retry, next, back) {
@@ -212,11 +205,11 @@ function feedback(s, a1, a2, idx, retry, next, back) {
 }
 function ready() {
   screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🎨</span><h1>${esc(T.readyH)}</h1><p>${esc(T.ready)}</p>
-    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 11 });
+    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 9 });
   $('go').addEventListener('click', () => trial({ b: 0, i: 0 }));
 }
 function rate(b) {
-  const base = 12 + b * 27 + 24, cond = sess.blocks[b].cond;
+  const base = 10 + b * 21 + 18, cond = sess.blocks[b].cond;
   let v1 = null, v2 = null;
   const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
   const cheer = () => {
@@ -226,48 +219,23 @@ function rate(b) {
     $('go').addEventListener('click', q1);
   };
   const q1 = () => scaleQ({ idx: base + 1, head, q: T.r1, n: 7, chosen: v1, onBack: cheer, onPick: (v) => { v1 = v; q2(); } });
-  const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => {
-    v2 = v;
+  let v3 = null;
+  const done = () => {
     sess.rows.push({ type: 'rating', block: b + 1, condition: cond, item: 'room_for_own_response', value: v1 },
       { type: 'rating', block: b + 1, condition: cond, item: 'hard_to_understand', value: v2 });
-    send();
-    if (b < 2) trial({ b: b + 1, i: 0 }); else sus();
-  } });
+    if (b === 1) sess.rows.push({ type: 'check', block: 2, item: 'attention_pass', value: v3 === 2 ? 1 : 0 });
+    if (b < 2) { send(); trial({ b: b + 1, i: 0 }); } else { sess.finished = new Date().toISOString(); finish(); }
+  };
+  const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => { v2 = v; if (b === 1) q3(); else done(); } });
+  // attention check: a third question after part 2 only ("please choose 2")
+  const q3 = () => scaleQ({ idx: base + 2, head, q: T.attention, n: 7, chosen: v3, onBack: q2, onPick: (v) => { v3 = v; done(); } });
   cheer();
 }
-function sus() {
-  // the 10 usability questions (+ attention check after item 5) on ONE page, 1-5 buttons per row
-  const items = T.sus.slice(0, 5).concat([T.attention], T.sus.slice(5));
-  const v = items.map(() => null);
-  screen(`<h1>${esc(T.susH)}</h1><p class="kicker">${esc(T.susIntro)}</p>
-    <div class="suslist">${items.map((q, k) => `<div class="susrow card" data-k="${k}"><p class="susq"><span class="n">${k + 1}</span>${esc(q)}</p>
-      <div class="nums" role="radiogroup" aria-label="${esc(q)}">${[1, 2, 3, 4, 5].map((x) => `<button type="button" class="num" role="radio" aria-checked="false" data-v="${x}">${x}</button>`).join('')}</div>
-      <div class="ends"><span>${esc(T.dis)}</span><span>${esc(T.agr)}</span></div></div>`).join('')}</div>` +
-    actions(T.cont, { disabled: true, extra: `<span class="left" id="left"></span>` }), { idx: 93, focus: 'h1' });
-  const left = () => { const n = v.filter((x) => x === null).length; $('left').textContent = n ? `${items.length - n} / ${items.length}` : ''; $('go').disabled = n > 0; };
-  main.querySelectorAll('.susrow').forEach((row) => row.addEventListener('click', (e) => {
-    const b = e.target.closest('.num'); if (!b) return;
-    const k = +row.dataset.k; v[k] = +b.dataset.v;
-    row.querySelectorAll('.num').forEach((t) => t.setAttribute('aria-checked', String(t === b)));
-    row.classList.add('answered'); left();
-    const next = row.nextElementSibling;          // gently bring the next question into view
-    if (next && v[k + 1] === null) setTimeout(() => next.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
-  }));
-  left();
-  $('go').addEventListener('click', () => {
-    const att = v[5], sv = v.slice(0, 5).concat(v.slice(6));
-    sv.forEach((x, k) => sess.rows.push({ type: 'sus', item: `sus${k + 1}`, value: x }));
-    sess.rows.push({ type: 'sus', item: 'sus_score', value: 2.5 * sv.reduce((s, x, k) => s + (k % 2 === 0 ? x - 1 : 5 - x), 0) });
-    sess.rows.push({ type: 'check', item: 'attention_pass', value: att === 2 ? 1 : 0 });
-    sess.finished = new Date().toISOString();
-    finish();
-  });
-}
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 93 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 72 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 93 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 72 });
     $('go').addEventListener('click', finish); return;
   }
   const shareUrl = location.origin + location.pathname;

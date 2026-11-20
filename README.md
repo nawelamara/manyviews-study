@@ -7,9 +7,9 @@ Traditional Chinese, French and Arabic. Anonymous answers go to a Google Sheet y
 While closed, you can still test it with `?preview=1` at the end of the address (answers in preview are marked, and no
 participant number is taken from the sheet).
 
-## What participants see (about 20–25 minutes, phone or computer)
+## What participants see (about 20 minutes, phone or computer)
 Language → information + consent (18 or older, agree) → how it works → 2 practice paintings → 18 paintings in 3 parts →
-2 ratings after each part → 10 usability questions (+ 1 attention check: "please choose 2") → thank you (+ completion code).
+2 ratings after each part (+ 1 attention check after part 2: "please choose 2") → thank you (+ completion code).
 Per painting: look (optional emotion buttons, not saved) → read the description and the labelled model prediction →
 the text is hidden → Q1 "how did earlier viewers respond?" and Q2 "which emotion did they select most often?".
 
