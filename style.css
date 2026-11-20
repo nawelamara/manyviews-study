@@ -198,3 +198,10 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
   .nums { gap: 5px; } .num { font-size: 18px; height: 52px; border-radius: 12px; }
   .langs { grid-template-columns: 1fr; }
 }
+
+/* example screen + automatic word meanings */
+.exlist { display: grid; gap: 10px; margin: 16px 0; }
+.card.ex { display: flex; gap: 14px; align-items: flex-start; margin: 0; }
+.card.ex b { display: block; font-size: 18px; } .card.ex p { margin: 4px 0 0; color: var(--ink-2); font-size: 16px; }
+.meanings { font-size: 15px; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 4px 0; }
+.meanings b { color: var(--ink); }

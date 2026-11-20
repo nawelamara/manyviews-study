@@ -27,40 +27,40 @@ function describe(lang, s, cond) {
   const cnts = (xs) => F.list(xs.map(([f, c]) => F.cnt(E(f), c, n)));
   const T = {
     en: {
-      A: () => `This painting evokes ${E(s.order[0][0])}.`,
+      A: () => `This painting makes people feel ${E(s.order[0][0])}.`,
       B: () => `Viewers selected ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `More viewers selected ${cnts([s.order[0]])}, although some selected other emotions, such as ${cnts(s.order.slice(1, 3))}.`,
       varied: () => `Viewer responses varied. The three most frequent were ${cnts(s.order.slice(0, 3))}.`,
       few: () => `Only ${s.nEmotion < n ? `${s.nEmotion} of the ${n} viewers selected an emotion` : `${n} viewers responded`}, so the available data are insufficient to determine reliably whether viewers agree. They selected ${cnts(s.order.slice(0, 3))}.`,
       opp: ' Some of these emotions point in opposite directions (positive and negative).',
-      model: () => `Model prediction (an AI estimate, not what viewers selected): mostly ${E(s.model[0])}, with some ${E(s.model[1])} and ${E(s.model[2])}.`,
+      model: () => `An AI guessed: mostly ${E(s.model[0])}, with some ${E(s.model[1])} and ${E(s.model[2])}. This is a computer's guess, not what people chose.`,
     },
     'zh-Hant': {
-      A: () => `這幅畫喚起${E(s.order[0][0])}。`,
+      A: () => `這幅畫讓人感到${E(s.order[0][0])}。`,
       B: () => `觀看者選擇了${cnts(s.order.slice(0, 3))}。`,
       leader: () => `較多觀看者選擇了${cnts([s.order[0]])}，不過也有人選擇了其他情緒，例如${cnts(s.order.slice(1, 3))}。`,
       varied: () => `觀看者的反應各不相同。最常見的三種是${cnts(s.order.slice(0, 3))}。`,
       few: () => `${s.nEmotion < n ? `${n} 位觀看者中只有 ${s.nEmotion} 位選擇了情緒` : `只有 ${n} 位觀看者作答`}，資料不足以可靠判斷觀看者的意見是否一致。他們選擇了${cnts(s.order.slice(0, 3))}。`,
       opp: '其中一些情緒的方向相反（正面與負面）。',
-      model: () => `模型預測（AI 的估計，不是觀看者的選擇）：主要是${E(s.model[0])}，也有一些${E(s.model[1])}和${E(s.model[2])}。`,
+      model: () => `AI 猜測：主要是${E(s.model[0])}，也有一些${E(s.model[1])}和${E(s.model[2])}。這是電腦的猜測，不是人們的選擇。`,
     },
     fr: {
-      A: () => `Ce tableau évoque : ${E(s.order[0][0])}.`,
+      A: () => `Ce tableau fait ressentir : ${E(s.order[0][0])}.`,
       B: () => `Les spectateurs ont choisi : ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `Davantage de spectateurs ont choisi ${cnts([s.order[0]])}, même si certains ont choisi d’autres émotions, par exemple ${cnts(s.order.slice(1, 3))}.`,
       varied: () => `Les réactions des spectateurs ont varié. Les trois plus fréquentes : ${cnts(s.order.slice(0, 3))}.`,
       few: () => `${s.nEmotion < n ? `Seuls ${s.nEmotion} des ${n} spectateurs ont choisi une émotion` : `Seuls ${n} spectateurs ont répondu`} ; les données ne suffisent donc pas pour savoir de façon fiable si les spectateurs sont d’accord. Ils ont choisi : ${cnts(s.order.slice(0, 3))}.`,
       opp: ' Certaines de ces émotions vont dans des directions opposées (positive et négative).',
-      model: () => `Prédiction du modèle (une estimation de l’IA, pas le choix des spectateurs) : surtout ${E(s.model[0])}, avec un peu de ${E(s.model[1])} et de ${E(s.model[2])}.`,
+      model: () => `Une IA a deviné : surtout ${E(s.model[0])}, avec un peu de ${E(s.model[1])} et de ${E(s.model[2])}. C’est la supposition d’un ordinateur, pas le choix des personnes.`,
     },
     ar: {
-      A: () => `المشاعر التي تثيرها هذه اللوحة: ${E(s.order[0][0])}.`,
+      A: () => `هذه اللوحة تجعل الناس يشعرون بـ: ${E(s.order[0][0])}.`,
       B: () => `اختار المشاهدون: ${cnts(s.order.slice(0, 3))}.`,
       leader: () => `اختار عدد أكبر من المشاهدين ${cnts([s.order[0]])}، مع أن بعضهم اختار مشاعر أخرى، مثل ${cnts(s.order.slice(1, 3))}.`,
       varied: () => `تنوّعت ردود فعل المشاهدين. وكانت الثلاثة الأكثر تكرارًا: ${cnts(s.order.slice(0, 3))}.`,
       few: () => `${s.nEmotion < n ? `اختار ${s.nEmotion} فقط من أصل ${n} مشاهدين شعورًا ما` : `أجاب ${n} مشاهدين فقط`}، لذلك لا تكفي البيانات لمعرفة ما إذا كان المشاهدون متفقين بشكل موثوق. وقد اختاروا: ${cnts(s.order.slice(0, 3))}.`,
       opp: ' بعض هذه المشاعر في اتجاهين متعاكسين (إيجابي وسلبي).',
-      model: () => `توقّع النموذج (تقدير من الذكاء الاصطناعي، وليس ما اختاره المشاهدون): غالبًا ${E(s.model[0])}، مع بعض ${E(s.model[1])} و${E(s.model[2])}.`,
+      model: () => `خمّن الذكاء الاصطناعي: غالبًا ${E(s.model[0])}، مع بعض ${E(s.model[1])} و${E(s.model[2])}. هذا تخمين حاسوب، وليس ما اختاره الناس.`,
     },
   }[lang];
   if (cond === 'model') return T.model();
@@ -309,3 +309,46 @@ const SIMPLE = {
   },
 };
 Object.keys(SIMPLE).forEach((l) => Object.assign(UI[l], SIMPLE[l]));
+
+// ---- Plainer screens (Nov 20): who the "viewers" are, clear card labels, word meanings shown automatically,
+// and one example screen that explains the three possible answers before the practice.
+const PLAIN = {
+  en: {
+    explain: 'Each painting was seen by about 10 people before you (the "viewers"). Each of them picked the feelings the painting gave them.',
+    descH: 'What people felt', aiH: 'AI guess', meanH: 'Word meanings:',
+    exH: 'The main question', exIntro: 'After each painting you will be asked how the people before you felt. There are three possible answers:',
+    ex: { leader: 'Example: 9 of 11 people felt sadness, only 2 felt fear.', varied: 'Example: 4 felt happiness, 3 felt surprise, 3 felt trust. No clear winner.', few: 'Example: the description says there is not enough data.' },
+    exNote: 'The AI guess is shown too, but the questions are always about what the people chose.', exGo: 'Got it, start the practice',
+  },
+  'zh-Hant': {
+    explain: '每幅畫在您之前大約有 10 個人看過（即「觀看者」）。每個人都選出了這幅畫帶給他們的感受。',
+    descH: '人們的感受', aiH: 'AI 猜測', meanH: '詞語意思：',
+    exH: '主要問題', exIntro: '每幅畫之後，我們會問您：之前的人有什麼感受？可能的答案有三種：',
+    ex: { leader: '例如：11 人中有 9 人感到悲傷，只有 2 人感到恐懼。', varied: '例如：4 人感到快樂，3 人感到驚訝，3 人感到信任，沒有明顯的多數。', few: '例如：描述中說資料不足。' },
+    exNote: '畫面上也會顯示 AI 的猜測，但問題問的永遠是人們的選擇。', exGo: '明白了，開始練習',
+  },
+  fr: {
+    explain: 'Chaque tableau a été regardé par une dizaine de personnes avant vous (les « spectateurs »). Chacune a choisi ce que le tableau lui faisait ressentir.',
+    descH: 'Ce que les gens ont ressenti', aiH: 'Supposition de l’IA', meanH: 'Sens des mots :',
+    exH: 'La question principale', exIntro: 'Après chaque tableau, on vous demandera ce qu’ont ressenti les personnes avant vous. Il y a trois réponses possibles :',
+    ex: { leader: 'Exemple : 9 personnes sur 11 ont ressenti de la tristesse, seulement 2 de la peur.', varied: 'Exemple : 4 ont ressenti de la joie, 3 de la surprise, 3 de la confiance. Aucun sentiment ne domine.', few: 'Exemple : la description dit qu’il n’y a pas assez de données.' },
+    exNote: 'La supposition de l’IA est aussi affichée, mais les questions portent toujours sur le choix des personnes.', exGo: 'Compris, commencer l’entraînement',
+  },
+  ar: {
+    explain: 'كل لوحة شاهدها نحو 10 أشخاص قبلك («المشاهدون»). اختار كلٌّ منهم المشاعر التي أثارتها اللوحة فيه.',
+    descH: 'ما شعر به الناس', aiH: 'تخمين الذكاء الاصطناعي', meanH: 'معاني الكلمات:',
+    exH: 'السؤال الرئيسي', exIntro: 'بعد كل لوحة سنسألك: بماذا شعر الأشخاص قبلك؟ هناك ثلاث إجابات ممكنة:',
+    ex: { leader: 'مثال: 9 من أصل 11 شخصًا شعروا بالحزن، و2 فقط بالخوف.', varied: 'مثال: 4 شعروا بالسعادة، و3 بالدهشة، و3 بالثقة. لا يوجد شعور غالب.', few: 'مثال: يقول الوصف إن البيانات غير كافية.' },
+    exNote: 'يظهر تخمين الذكاء الاصطناعي أيضًا، لكن الأسئلة تتعلق دائمًا بما اختاره الناس.', exGo: 'فهمت، ابدأ التدريب',
+  },
+};
+Object.keys(PLAIN).forEach((l) => Object.assign(UI[l], PLAIN[l]));
+
+// ---- continue after a refresh
+const RESUME = {
+  en: { resumeH: 'Welcome back!', resumeP: (k) => `Your answers are safe. You stopped after ${k} of 18 paintings. Continue where you left off?`, resumeGo: 'Continue', restart: 'Start again', doneBefore: 'You have already taken part in this study. Thank you very much!' },
+  'zh-Hant': { resumeH: '歡迎回來！', resumeP: (k) => `您的答案已保存。您完成了 18 幅畫中的 ${k} 幅。要從上次停下的地方繼續嗎？`, resumeGo: '繼續', restart: '重新開始', doneBefore: '您已經參加過這項研究。非常感謝！' },
+  fr: { resumeH: 'Bon retour !', resumeP: (k) => `Vos réponses sont enregistrées. Vous vous êtes arrêté(e) après ${k} tableaux sur 18. Reprendre là où vous en étiez ?`, resumeGo: 'Continuer', restart: 'Recommencer', doneBefore: 'Vous avez déjà participé à cette étude. Merci beaucoup !' },
+  ar: { resumeH: 'مرحبًا بعودتك!', resumeP: (k) => `إجاباتك محفوظة. توقفت بعد ${k} من أصل 18 لوحة. هل تريد المتابعة من حيث توقفت؟`, resumeGo: 'متابعة', restart: 'البدء من جديد', doneBefore: 'لقد شاركت في هذه الدراسة من قبل. شكرًا جزيلًا!' },
+};
+Object.keys(RESUME).forEach((l) => Object.assign(UI[l], RESUME[l]));

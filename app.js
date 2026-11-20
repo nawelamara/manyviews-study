@@ -1,7 +1,7 @@
 /* Many Views – online description study (A single emotion / B fixed top 3 / C agreement-adaptive).
    Friendly design: one question per screen, big tap targets (keys 1-4 work too), practice with "read it again".
    Anonymous: no name, e-mail or IP is collected by this page. Answers go to the researchers' Google Sheet
-   (CONFIG.ENDPOINT) after each part and at the end. Own emotion picks are NOT saved.
+   (CONFIG.ENDPOINT) after every painting and at the end; progress is kept in the browser, so a refresh can continue.
    Balanced assignment: the sheet gives the next participant number (6 orders x 3 painting rotations = 18 combinations);
    if it cannot be reached, a random number is used. Closed unless CONFIG.OPEN and CONFIG.ENDPOINT are set (test: ?preview=1).
    In the 18 study paintings the description cannot be reopened once the questions start (that is what is measured);
@@ -27,7 +27,10 @@ function plan(p) {
 
 // ---- sending (Google Apps Script web app); no-cors, so the whole session is resent each time and the sheet keeps one copy
 const sess = { rows: [] };
-async function send() {
+// sends go one after another (never overlapping), so the sheet always receives them in order
+let queue = Promise.resolve(true);
+function send() { queue = queue.then(sendNow, sendNow); return queue; }
+async function sendNow() {
   if (!C.ENDPOINT) return true;
   try {
     await fetch(C.ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -35,6 +38,26 @@ async function send() {
         finished_at: sess.finished || '', assigned_by: sess.assignedBy + (preview ? '-preview' : '') }, rows: sess.rows }) });
     return true;
   } catch (e) { return false; }
+}
+// ---- progress kept in this browser, so a refresh or a closed tab does not lose anything: the participant can continue
+// where they stopped (same participant number, same paintings). Answers are also sent after every painting.
+const KEY = 'mv-study-progress' + (preview ? '-preview' : ''), DONE = 'mv-study-done' + (preview ? '-preview' : '');
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: nothing kept */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } } };
+function save(next) { sess.next = next; store.set(KEY, JSON.stringify({ sess, lang, t: Date.now() })); }
+function loadSaved() {
+  try { const o = JSON.parse(store.get(KEY) || 'null'); if (o && o.sess && o.sess.id && Date.now() - o.t < 3 * 864e5) return o; } catch (e) { /* ignore */ }
+  return null;
+}
+function resume(o) {
+  Object.assign(sess, o.sess); setLang(o.lang);
+  const n = sess.next || { kind: 'intro' };
+  if (sess.finished) finish();
+  else if (n.kind === 'trial') trial({ b: n.b, i: n.i });
+  else if (n.kind === 'rate') rate(n.b);
+  else if (n.kind === 'ready') ready();
+  else intro();
 }
 async function nextNumber() {
   if (!C.ENDPOINT || preview) return [1 + Math.floor(Math.random() * 54), 'random'];
@@ -49,7 +72,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 73;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
+const TOTAL = 74;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
 let keyHandler = null, lastIdx = 0;
 function screen(html, { focus, idx, back } = {}) {
   const dir = idx !== undefined && idx < lastIdx ? 'back' : 'fwd';
@@ -75,6 +98,12 @@ function setLang(l) {
 }
 const actions = (label, { disabled, extra = '' } = {}) => `<div class="actions">${extra}<button class="primary" id="go"${disabled ? ' disabled' : ''}>
   <span>${esc(label)}</span><span class="arr" aria-hidden="true">→</span></button><span class="enter" aria-hidden="true">Enter ↵</span></div>`;
+// meanings of the less common emotion words that appear on this screen
+const meanings = (s, cond) => {
+  const shown = (cond === 'A' ? s.order.slice(0, 1) : s.order.slice(0, 3)).map(([f]) => f).concat(s.model.slice(0, 3));
+  const hard = Object.keys(T.g).filter((f) => shown.includes(f));
+  return hard.length ? `<p class="meanings"><b>${esc(T.meanH)}</b> ${hard.map((f) => `${esc(emo(lang, f))} = ${esc(T.g[f])}`).join(' · ')}</p>` : '';
+};
 const glossary = () => `<details class="gloss"><summary>${esc(T.gH)}</summary><ul>${Object.entries(T.g).map(([f, d]) => `<li><b>${esc(emo(lang, f))}</b>: ${esc(d)}</li>`).join('')}</ul></details>`;
 const progress = (k, total, practice) => `<div class="progress" aria-live="polite"><span class="badge${practice ? ' prac' : ''}">${esc(practice ? T.practice(k, total) : T.painting(k, total))}</span>
   <span class="dotsrow" aria-hidden="true">${Array.from({ length: total > 6 ? 6 : total }, (_, i) => {
@@ -129,6 +158,20 @@ function scaleQ({ idx, head = '', q, n, chosen, onPick, onBack }) {
 // ---- flow
 function welcome() {
   if ((!C.OPEN || !C.ENDPOINT) && !preview) { screen(`<div class="hero"><h1>${esc(T.title)}</h1><p>${esc(T.closed)}</p></div>`, { idx: 0 }); return; }
+  const old = loadSaved();
+  if (old && !sess.id) {
+    if (UI[old.lang]) setLang(old.lang);
+    const k = old.sess.rows.filter((r) => r.type === 'trial').length;
+    screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">👋</span><h1>${esc(T.resumeH)}</h1><p>${esc(T.resumeP(k))}</p></div>` +
+      actions(T.resumeGo, { extra: `<button type="button" class="secondary" id="restart">${esc(T.restart)}</button>` }), { idx: 0 });
+    $('go').addEventListener('click', () => resume(old));
+    $('restart').addEventListener('click', () => { store.del(KEY); welcome(); });
+    return;
+  }
+  if (store.get(DONE) && !sess.id) {
+    screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🖼️</span><h1>${esc(T.endH)}</h1><p>${esc(T.doneBefore)}</p></div>`, { idx: TOTAL });
+    return;
+  }
   const pics = [S.leader[0], S.varied[2], S.few[3], S.leader[3], S.varied[0]];
   screen(`<div class="hero"><div class="collage" aria-hidden="true">${pics.map((s) => imgTag(s, 'alt=""')).join('')}</div>
     <span class="eyebrow">Many Views · ${esc(T.studyWord)}</span>
@@ -153,6 +196,7 @@ function consent() {
       Object.assign(sess, { id: `S${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, p, order: pl.order, rot: pl.rot, blocks: pl.blocks,
         started: new Date().toISOString(), assignedBy: by });
     }
+    save({ kind: 'intro' });
     intro();
   });
 }
@@ -160,19 +204,25 @@ function intro() {
   screen(`<h1>${esc(T.introH)}</h1><p class="lead">${esc(T.explain)}</p>
     <ol class="steps">${T.steps.map(([ic, h, t], i) => `<li class="step"><span class="ic" aria-hidden="true">${ic}</span><div><b><span class="n">${i + 1}</span> ${esc(h)}</b><p>${esc(t)}</p></div></li>`).join('')}</ol>
     <p class="center muted">${esc(T.introEnd)}</p>` + actions(T.startPractice), { idx: 2, back: consent });
+  $('go').addEventListener('click', examples);
+}
+function examples() {
+  screen(`<h1>${esc(T.exH)}</h1><p class="lead">${esc(T.exIntro)}</p>
+    <div class="exlist">${['leader', 'varied', 'few'].map((k, i) => `<div class="card ex"><span class="key">${i + 1}</span><div><b>${esc(T.q1o[k])}</b><p>${esc(T.ex[k])}</p></div></div>`).join('')}</div>
+    <p class="muted center">🤖 ${esc(T.exNote)}</p>` + actions(T.exGo), { idx: 3, back: intro });
   $('go').addEventListener('click', () => trial({ practice: true, i: 0 }));
 }
 function trial(pos) {
   const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
-  const base = practice ? 3 + pos.i * 3 : 10 + pos.b * 21 + pos.i * 3;
+  const base = practice ? 4 + pos.i * 3 : 11 + pos.b * 21 + pos.i * 3;
   const head = progress(k, total, practice);
   // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
   const read = () => {
     const tRead = performance.now();
-    screen(head + picture(s, true) + `<div class="card desc"><span class="tag">📝 ${esc(T.descH)}</span><p>${esc(describe(lang, s, cond))}</p></div>
-      <div class="card desc model"><span class="tag">🤖 AI</span><p>${esc(describe(lang, s, 'model'))}</p></div>${glossary()}` + actions(T.read),
+    screen(head + picture(s, true) + `<div class="card desc"><span class="tag">👥 ${esc(T.descH)}</span><p>${esc(describe(lang, s, cond))}</p></div>
+      <div class="card desc model"><span class="tag">🤖 ${esc(T.aiH)}</span><p>${esc(describe(lang, s, 'model'))}</p></div>${meanings(s, cond)}` + actions(T.read),
     { focus: '.desc', idx: base });
     $('go').addEventListener('click', () => { readMs += Math.round(performance.now() - tRead); t0 = performance.now(); ask1(); });
   };
@@ -189,7 +239,9 @@ function trial(pos) {
     sess.rows.push({ type: 'trial', block: pos.b + 1, position: k, condition: cond, painting: s.id, category: s.rule,
       q1_answer: a1, q1_correct: a1 === s.rule ? 1 : 0, q2_answer: a2, q2_correct: a2 === s.order[0][0] ? 1 : 0,
       viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0) });
-    if (pos.i + 1 < 6) trial({ b: pos.b, i: pos.i + 1 }); else rate(pos.b);
+    const next = pos.i + 1 < 6 ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : { kind: 'rate', b: pos.b };
+    save(next); send();
+    if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else rate(pos.b);
   };
   read();
 }
@@ -204,12 +256,13 @@ function feedback(s, a1, a2, idx, retry, next, back) {
   $('go').addEventListener('click', next);
 }
 function ready() {
+  save({ kind: 'ready' });
   screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🎨</span><h1>${esc(T.readyH)}</h1><p>${esc(T.ready)}</p>
-    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 9 });
+    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 10 });
   $('go').addEventListener('click', () => trial({ b: 0, i: 0 }));
 }
 function rate(b) {
-  const base = 10 + b * 21 + 18, cond = sess.blocks[b].cond;
+  const base = 11 + b * 21 + 18, cond = sess.blocks[b].cond;
   let v1 = null, v2 = null;
   const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
   const cheer = () => {
@@ -224,7 +277,8 @@ function rate(b) {
     sess.rows.push({ type: 'rating', block: b + 1, condition: cond, item: 'room_for_own_response', value: v1 },
       { type: 'rating', block: b + 1, condition: cond, item: 'hard_to_understand', value: v2 });
     if (b === 1) sess.rows.push({ type: 'check', block: 2, item: 'attention_pass', value: v3 === 2 ? 1 : 0 });
-    if (b < 2) { send(); trial({ b: b + 1, i: 0 }); } else { sess.finished = new Date().toISOString(); finish(); }
+    if (b < 2) { save({ kind: 'trial', b: b + 1, i: 0 }); send(); trial({ b: b + 1, i: 0 }); }
+    else { sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish(); }
   };
   const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => { v2 = v; if (b === 1) q3(); else done(); } });
   // attention check: a third question after part 2 only ("please choose 2")
@@ -232,12 +286,13 @@ function rate(b) {
   cheer();
 }
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 72 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 73 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 72 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 73 });
     $('go').addEventListener('click', finish); return;
   }
+  store.del(KEY); store.set(DONE, '1');
   const shareUrl = location.origin + location.pathname;
   screen(`<div class="confetti" aria-hidden="true">${Array.from({ length: 60 }, (_, i) => `<i style="--x:${(Math.random() * 100).toFixed(1)};--d:${(Math.random() * 1.2).toFixed(2)}s;--t:${(2.2 + Math.random() * 1.6).toFixed(2)}s;--r:${Math.round(Math.random() * 360)}deg;--c:${i % 4}"></i>`).join('')}</div>
     <div class="celebrate"><span class="big pop" aria-hidden="true">🖼️</span><h1>${esc(T.endH)}</h1><p>${esc(T.end)}</p></div>
