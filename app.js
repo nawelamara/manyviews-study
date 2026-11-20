@@ -60,6 +60,7 @@ function resume(o) {
   else if (n.kind === 'trial') trial({ b: n.b, i: n.i });
   else if (n.kind === 'rate') rate(n.b);
   else if (n.kind === 'pref') prefs();
+  else if (n.kind === 'comment') comment();
   else if (n.kind === 'ready') ready();
   else intro();
 }
@@ -76,7 +77,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 103;  // 4 start + 2x4 practice + 1 + 18x4 trials + part ends (2 x 4 + 3) + 2 preferences + end                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
+const TOTAL = 104;  // 4 start + 2x4 practice + 1 + 18x4 trials + part ends (2 x 4 + 3) + 2 preferences + end                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
 let keyHandler = null, lastIdx = 0;
 function screen(html, { focus, idx, back } = {}) {
   const dir = idx !== undefined && idx < lastIdx ? 'back' : 'fwd';
@@ -90,7 +91,7 @@ function screen(html, { focus, idx, back } = {}) {
 document.addEventListener('keydown', (e) => {
   if (e.altKey || e.ctrlKey || e.metaKey || document.querySelector('.lightbox')) return;
   if (keyHandler && keyHandler(e)) return;
-  if (e.key === 'Enter' && !(e.target.closest && e.target.closest('button, a, select, summary, input'))) {
+  if (e.key === 'Enter' && !(e.target.closest && e.target.closest('button, a, select, summary, input, textarea'))) {
     const g = $('go'); if (g && !g.disabled) { e.preventDefault(); g.click(); }
   }
 });
@@ -304,15 +305,24 @@ function prefs() {
     p2 = v;
     sess.rows.push({ type: 'pref', painting: s.id, item: 'museum', value: p1, position: opts.indexOf(p1) + 1 },
       { type: 'pref', painting: s.id, item: 'trust', value: p2, position: opts.indexOf(p2) + 1 });
-    sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish();
+    save({ kind: 'comment' }); comment();
   } });
   q1();
 }
+// optional comment at the very end (helps to find unclear parts); kept to 500 characters
+function comment() {
+  screen(`<h2 class="q">${esc(T.commentQ)}</h2><textarea id="cmt" class="cmt" rows="4" maxlength="500" placeholder="${esc(T.commentPh)}"></textarea>` + actions(T.finish), { idx: 102, focus: '.q' });
+  $('go').addEventListener('click', () => {
+    const v = $('cmt').value.trim().slice(0, 500);
+    if (v) sess.rows.push({ type: 'comment', item: 'confusing', value: v });
+    sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish();
+  });
+}
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 102 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 103 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 102 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 103 });
     $('go').addEventListener('click', finish); return;
   }
   store.del(KEY); store.set(DONE, '1');

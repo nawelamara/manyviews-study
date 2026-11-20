@@ -112,3 +112,9 @@ if stats is not None:
         holm[i] = run
     res["p (Holm)"] = pd.Series(holm)
 print(res.round(4).to_string(index=False))
+
+cm = d[d["type"] == "comment"]
+if len(cm):
+    print(f"\nComments ({len(cm)}): what was confusing")
+    for _, x in cm.iterrows():
+        print(f"  [{x.get('lang', '')}] {x['value']}")

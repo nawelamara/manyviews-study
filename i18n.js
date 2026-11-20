@@ -399,3 +399,16 @@ const TRUST = {
   ar: { r3: 'سأثق بأوصاف مثل هذه.', rateIntro: 'بضعة أسئلة سريعة عن الأوصاف التي قرأتها للتو:' },
 };
 Object.keys(TRUST).forEach((l) => Object.assign(UI[l], TRUST[l]));
+
+// ---- who the viewers are (said once, before the practice) + an optional comment at the end
+const FRAME = {
+  en: { explain: 'In an earlier research project, about 10 people looked at each painting and chose the feelings it gave them. They could choose more than one feeling. We call them the “viewers”. They are not other participants in this study.',
+    commentQ: 'Was anything confusing or unclear? (optional)', commentPh: 'Write a few words, or leave it empty', finish: 'Finish' },
+  'zh-Hant': { explain: '在之前的一個研究計畫中，每幅畫大約有 10 個人看過，並選出了這幅畫帶給他們的感受。他們可以選擇不只一種感受。我們稱他們為「觀看者」。他們不是這項研究的其他參與者。',
+    commentQ: '有沒有任何讓您困惑或不清楚的地方？（可略過）', commentPh: '寫幾個字，或留空', finish: '完成' },
+  fr: { explain: 'Dans un projet de recherche antérieur, une dizaine de personnes ont regardé chaque tableau et choisi ce qu’il leur faisait ressentir. Elles pouvaient choisir plusieurs sentiments. Nous les appelons les « spectateurs ». Ce ne sont pas d’autres participants de cette étude.',
+    commentQ: 'Quelque chose était-il confus ou peu clair ? (facultatif)', commentPh: 'Écrivez quelques mots, ou laissez vide', finish: 'Terminer' },
+  ar: { explain: 'في مشروع بحثي سابق، شاهد نحو 10 أشخاص كل لوحة واختاروا المشاعر التي أثارتها فيهم. وكان بإمكانهم اختيار أكثر من شعور. نسمّيهم «المشاهدين». وهم ليسوا مشاركين آخرين في هذه الدراسة.',
+    commentQ: 'هل كان هناك شيء مربك أو غير واضح؟ (اختياري)', commentPh: 'اكتب بضع كلمات، أو اتركه فارغًا', finish: 'إنهاء' },
+};
+Object.keys(FRAME).forEach((l) => Object.assign(UI[l], FRAME[l]));

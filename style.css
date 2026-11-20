@@ -208,3 +208,6 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
 
 /* preference question: long option texts */
 .tile .lbl { line-height: 1.45; }
+
+.cmt { width: 100%; font: inherit; font-size: 17px; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--ink); resize: vertical; }
+.cmt:focus { outline: none; border-color: var(--purple); }
