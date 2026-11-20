@@ -412,3 +412,24 @@ const FRAME = {
     commentQ: 'هل كان هناك شيء مربك أو غير واضح؟ (اختياري)', commentPh: 'اكتب بضع كلمات، أو اتركه فارغًا', finish: 'إنهاء' },
 };
 Object.keys(FRAME).forEach((l) => Object.assign(UI[l], FRAME[l]));
+
+// ---- time left, halfway, and the participant's own results + what the study was about
+const FUN = {
+  en: { timeLeft: (m) => `About ${m} minute${m > 1 ? 's' : ''} left`, halfway: 'Halfway there! 🎨', resH: 'Your results',
+    resScore: (k, n) => `You read how the viewers felt correctly on ${k} of ${n} paintings.`, resBest: (name) => `You understood best with: ${name}.`,
+    dNames: { A: 'one emotion only', B: 'top 3 with numbers', C: 'a sentence that follows agreement' }, debriefH: 'What was this study about?',
+    debrief: 'Audio guides and AI apps often say that a painting makes people feel one emotion. But people often feel different things. You read three kinds of descriptions: one emotion only (A), the top 3 with numbers (B), and a sentence that changes with how much people agreed (C). Your answers show which one tells visitors the truth most clearly. Thank you for helping!' },
+  'zh-Hant': { timeLeft: (m) => `大約還剩 ${m} 分鐘`, halfway: '已完成一半！🎨', resH: '您的結果',
+    resScore: (k, n) => `在 ${n} 幅畫中，您正確理解了 ${k} 幅畫的觀看者感受。`, resBest: (name) => `您理解得最好的是：${name}。`,
+    dNames: { A: '只有一種情緒', B: '前三名加人數', C: '依一致程度改變的句子' }, debriefH: '這項研究在研究什麼？',
+    debrief: '語音導覽和 AI 應用程式常說一幅畫讓人感到某一種情緒，但人們的感受常常不同。您讀到了三種描述：只有一種情緒（A）、前三名加人數（B），以及依人們一致程度而改變的句子（C）。您的回答能幫助我們找出哪一種最能清楚、真實地告訴觀眾。謝謝您的幫忙！' },
+  fr: { timeLeft: (m) => `Environ ${m} minute${m > 1 ? 's' : ''} restante${m > 1 ? 's' : ''}`, halfway: 'À mi-chemin ! 🎨', resH: 'Vos résultats',
+    resScore: (k, n) => `Vous avez bien compris ce qu’ont ressenti les spectateurs pour ${k} tableaux sur ${n}.`, resBest: (name) => `Vous avez le mieux compris avec : ${name}.`,
+    dNames: { A: 'une seule émotion', B: 'le top 3 avec les nombres', C: 'une phrase qui suit l’accord' }, debriefH: 'De quoi parlait cette étude ?',
+    debrief: 'Les audioguides et les applications d’IA disent souvent qu’un tableau fait ressentir une seule émotion. Mais les gens ressentent souvent des choses différentes. Vous avez lu trois types de descriptions : une seule émotion (A), le top 3 avec les nombres (B), et une phrase qui change selon l’accord entre les personnes (C). Vos réponses montrent laquelle dit la vérité le plus clairement aux visiteurs. Merci pour votre aide !' },
+  ar: { timeLeft: (m) => `بقي نحو ${m} دقيقة`, halfway: 'وصلت إلى المنتصف! 🎨', resH: 'نتائجك',
+    resScore: (k, n) => `فهمت بشكل صحيح ما شعر به المشاهدون في ${k} من أصل ${n} لوحة.`, resBest: (name) => `كان فهمك الأفضل مع: ${name}.`,
+    dNames: { A: 'شعور واحد فقط', B: 'أكثر 3 مشاعر مع الأعداد', C: 'جملة تتغير حسب الاتفاق' }, debriefH: 'عمّ كانت هذه الدراسة؟',
+    debrief: 'كثيرًا ما تقول الأدلة الصوتية وتطبيقات الذكاء الاصطناعي إن لوحة ما تجعل الناس يشعرون بشعور واحد. لكن الناس غالبًا ما يشعرون بأشياء مختلفة. قرأتَ ثلاثة أنواع من الأوصاف: شعور واحد فقط (A)، وأكثر 3 مشاعر مع الأعداد (B)، وجملة تتغير حسب مدى اتفاق الناس (C). تُظهر إجاباتك أيّها ينقل الحقيقة إلى الزوار بأوضح شكل. شكرًا لمساعدتك!' },
+};
+Object.keys(FUN).forEach((l) => Object.assign(UI[l], FUN[l]));

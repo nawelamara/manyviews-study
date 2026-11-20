@@ -221,7 +221,7 @@ function trial(pos) {
   const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
   const base = practice ? 4 + pos.i * 4 : 13 + pos.b * 29 + pos.i * 4;
-  const head = progress(k, total, practice);
+  const head = progress(k, total, practice) + (!practice && k === 10 ? `<p class="halfway pop">${esc(T.halfway)}</p>` : '');
   // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
   const read = () => {
@@ -275,7 +275,7 @@ function rate(b) {
   const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
   const cheer = () => {
     screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">${['🌱', '🌿', '🌳'][b]}</span><h1>${esc(T.blockDone(b + 1))}</h1>
-      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div>${T.cheer ? `<p>${esc(T.cheer[b])}</p>` : ''}</div>` +
+      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div>${T.cheer ? `<p>${esc(T.cheer[b])}</p>` : ''}<p class="timeleft">⏱ ${esc(T.timeLeft((2 - b) * 6 + 1))}</p></div>` +
       actions(T.cont), { idx: base });
     $('go').addEventListener('click', q1);
   };
@@ -318,6 +318,18 @@ function comment() {
     sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish();
   });
 }
+// the participant's own results (shown only after all answers are saved, so they cannot change any answer)
+function results() {
+  const tr = sess.rows.filter((r) => r.type === 'trial');
+  if (!tr.length) return '';
+  const ok = tr.filter((r) => r.q1_correct).length, by = {};
+  ['A', 'B', 'C'].forEach((c) => { const x = tr.filter((r) => r.condition === c); by[c] = [x.filter((r) => r.q1_correct).length, x.length]; });
+  const best = ['C', 'B', 'A'].reduce((m, c) => (by[c][0] > by[m][0] ? c : m), 'C');
+  return `<div class="card results"><h2>${esc(T.resH)}</h2><p class="big-num">${ok} / ${tr.length}</p><p>${esc(T.resScore(ok, tr.length))}</p>
+    ${['A', 'B', 'C'].map((c) => `<div class="rbar"><span class="rname">${c} · ${esc(T.dNames[c])}</span><span class="rtrack"><i style="width:${by[c][1] ? (100 * by[c][0]) / by[c][1] : 0}%"></i></span><span class="rnum">${by[c][0]}/${by[c][1]}</span></div>`).join('')}
+    <p class="muted">${esc(T.resBest(T.dNames[best]))}</p></div>
+    <div class="card"><h2>${esc(T.debriefH)}</h2><p>${esc(T.debrief)}</p></div>`;
+}
 async function finish() {
   screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 103 });
   const ok = await send();
@@ -328,7 +340,7 @@ async function finish() {
   store.del(KEY); store.set(DONE, '1');
   const shareUrl = location.origin + location.pathname;
   screen(`<div class="confetti" aria-hidden="true">${Array.from({ length: 60 }, (_, i) => `<i style="--x:${(Math.random() * 100).toFixed(1)};--d:${(Math.random() * 1.2).toFixed(2)}s;--t:${(2.2 + Math.random() * 1.6).toFixed(2)}s;--r:${Math.round(Math.random() * 360)}deg;--c:${i % 4}"></i>`).join('')}</div>
-    <div class="celebrate"><span class="big pop" aria-hidden="true">🖼️</span><h1>${esc(T.endH)}</h1><p>${esc(T.end)}</p></div>
+    <div class="celebrate"><span class="big pop" aria-hidden="true">🖼️</span><h1>${esc(T.endH)}</h1><p>${esc(T.end)}</p></div>${results()}
     ${C.COMPLETION_CODE ? `<div class="card center"><p>${esc(T.code)}</p><p class="code">${esc(C.COMPLETION_CODE)}</p></div>` : ''}
     ${T.share ? `<button type="button" class="secondary wide" id="share">🔗 ${esc(T.share)}</button>` : ''}`, { idx: TOTAL });
   const sh = $('share');
