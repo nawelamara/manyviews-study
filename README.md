@@ -8,10 +8,12 @@ While closed, you can still test it with `?preview=1` at the end of the address 
 participant number is taken from the sheet).
 
 ## What participants see (about 20 minutes, phone or computer)
-Language → information + consent (18 or older, agree) → how it works → 2 practice paintings → 18 paintings in 3 parts →
-2 ratings after each part (+ 1 attention check after part 2: "please choose 2") → thank you (+ completion code).
-Per painting: look (optional emotion buttons, not saved) → read the description and the labelled model prediction →
-the text is hidden → Q1 "how did earlier viewers respond?" and Q2 "which emotion did they select most often?".
+Language → information + consent (18 or older, agree) → how it works → the main question explained with examples →
+2 practice paintings (with feedback) → 18 paintings in 3 parts → after each part 2 ratings (+ an attention check after
+parts 1 and 2: "choose 2", "choose 5") → 2 preference questions (A, B and C side by side) → thank you.
+Per painting: the painting with the description and the labelled AI guess → the text is hidden → Q1 "how did the people
+before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: what the people chose most, or the AI's guess?".
+Answers are sent after every painting; progress is kept in the browser, so a refresh can continue.
 
 ## Set it up (once)
 1. **Google Sheet** (use the lab's or supervisor's Google account if possible): create a new Sheet, name it
@@ -35,7 +37,7 @@ Set `OPEN: true` in `config.js`, upload the folder again (step 4). Share the lin
 
 ## Balance
 The sheet hands out participant numbers 1, 2, 3, … → 6 condition orders × 3 painting rotations repeat every 18 people.
-Aim for **54 finished sessions** after removing attention-check failures (people who stop early leave gaps; that's fine).
+Aim for **72 finished sessions** (54 at least) after removing attention-check failures (people who stop early leave gaps; that's fine).
 
 ## Analysis
 In the sheet: File → Download → CSV (the "answers" tab) → `python analyze_study.py answers.csv`.

@@ -205,3 +205,6 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
 .card.ex b { display: block; font-size: 18px; } .card.ex p { margin: 4px 0 0; color: var(--ink-2); font-size: 16px; }
 .meanings { font-size: 15px; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 4px 0; }
 .meanings b { color: var(--ink); }
+
+/* preference question: long option texts */
+.tile .lbl { line-height: 1.45; }

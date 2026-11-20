@@ -19,10 +19,13 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const $ = (id) => document.getElementById(id);
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function shuffle(xs, r) { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const sets = [0, 1, 2].map((s) => ['leader', 'varied', 'few'].flatMap((cat) => S[cat].slice(2 * s, 2 * s + 2)));
+// Each participant gets 6 paintings of each type drawn at random from the pool (12 leader, 12 varied, 6 too-few),
+// 2 of each type per condition, so paintings can be treated as a random sample (not a fixed set). Condition order
+// is counterbalanced over 6 orders.
 function plan(p) {
-  const order = ORDERS[(p - 1) % 6], rot = Math.floor((p - 1) / 6) % 3, r = rng(1000 + p);
-  return { order, rot, blocks: order.split('').map((cond) => ({ cond, items: shuffle(sets[('ABC'.indexOf(cond) + rot) % 3], r) })) };
+  const order = ORDERS[(p - 1) % 6], r = rng(1000 + p), pick = {};
+  ['leader', 'varied', 'few'].forEach((cat) => { pick[cat] = shuffle(S[cat], r).slice(0, 6); });
+  return { order, rot: 0, blocks: order.split('').map((cond, ci) => ({ cond, items: shuffle(['leader', 'varied', 'few'].flatMap((cat) => pick[cat].slice(2 * ci, 2 * ci + 2)), r) })) };
 }
 
 // ---- sending (Google Apps Script web app); no-cors, so the whole session is resent each time and the sheet keeps one copy
@@ -56,6 +59,7 @@ function resume(o) {
   if (sess.finished) finish();
   else if (n.kind === 'trial') trial({ b: n.b, i: n.i });
   else if (n.kind === 'rate') rate(n.b);
+  else if (n.kind === 'pref') prefs();
   else if (n.kind === 'ready') ready();
   else intro();
 }
@@ -72,7 +76,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 74;                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
+const TOTAL = 103;  // 4 start + 2x4 practice + 1 + 18x4 trials + part ends (2 x 4 + 3) + 2 preferences + end                       // all screens: 3 start + 2x4 practice + 1 + 18x4 trials + 3x3 part ends (+ attention check) + end
 let keyHandler = null, lastIdx = 0;
 function screen(html, { focus, idx, back } = {}) {
   const dir = idx !== undefined && idx < lastIdx ? 'back' : 'fwd';
@@ -140,10 +144,10 @@ function choice({ idx, head = '', q, options, onPick, onBack, chosen }) {
     if (n >= 1 && n <= tiles.length) { pick(tiles[n - 1]); return true; } return false; };
 }
 // an agree/disagree question with 1..n round buttons, one per screen (auto-advance)
-function scaleQ({ idx, head = '', q, n, chosen, onPick, onBack }) {
+function scaleQ({ idx, head = '', q, n, chosen, onPick, onBack, lo, hi }) {
   screen(head + `<h2 class="q">${esc(q)}</h2><div class="scale" role="radiogroup" aria-label="${esc(q)}"><div class="nums">` +
     Array.from({ length: n }, (_, k) => `<button type="button" class="num" role="radio" aria-checked="${chosen === k + 1}" data-v="${k + 1}">${k + 1}</button>`).join('') +
-    `</div><div class="ends"><span>${esc(T.dis)}</span><span>${esc(T.agr)}</span></div></div>`, { focus: '.q', idx, back: onBack });
+    `</div><div class="ends"><span>${esc(lo || T.dis)}</span><span>${esc(hi || T.agr)}</span></div></div>`, { focus: '.q', idx, back: onBack });
   let done = false;
   const pick = (b) => {
     if (done) return; done = true;
@@ -215,7 +219,7 @@ function examples() {
 function trial(pos) {
   const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
-  const base = practice ? 4 + pos.i * 3 : 11 + pos.b * 21 + pos.i * 3;
+  const base = practice ? 4 + pos.i * 4 : 13 + pos.b * 29 + pos.i * 4;
   const head = progress(k, total, practice);
   // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
@@ -226,19 +230,22 @@ function trial(pos) {
     { focus: '.desc', idx: base });
     $('go').addEventListener('click', () => { readMs += Math.round(performance.now() - tRead); t0 = performance.now(); ask1(); });
   };
-  // 2. two questions, one per screen (the description is hidden now)
-  let a1 = null, a2 = null;
+  // 2. questions, one per screen (the description is hidden now): Q1 agreement, how sure, Q2 where a feeling came from
+  let a1 = null, c1 = null, a2 = null;
   const r = rng(7 + sess.p * 100 + (practice ? pos.i : 10 + k));
-  const q2opts = shuffle([s.order[0][0], s.model[0]], r);
+  const asked = r() < 0.5 ? 'people' : 'ai', askedF = asked === 'people' ? s.order[0][0] : s.model[0];   // half the time each
+  const q2opts = shuffle(['people', 'ai'], r);
   const ask1 = () => choice({ idx: base + 1, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'few', 'dontknow'].map((v) => [v, T.q1o[v]]),
-    onPick: (v) => { a1 = v; ask2(); } });
-  const ask2 = () => choice({ idx: base + 2, head, q: T.q2, chosen: a2, options: q2opts.map((f) => [f, emo(lang, f)]).concat([['dontknow', T.dontknow]]),
-    onBack: ask1, onPick: (v) => { a2 = v; done(); } });
+    onPick: (v) => { a1 = v; conf(); } });
+  const conf = () => scaleQ({ idx: base + 2, head, q: T.confQ, n: 7, chosen: c1, lo: T.confLo, hi: T.confHi, onBack: ask1, onPick: (v) => { c1 = v; ask2(); } });
+  const ask2 = () => choice({ idx: base + 3, head, q: T.q2f(emo(lang, askedF)), chosen: a2, options: q2opts.map((v) => [v, T.q2o[v]]).concat([['dontknow', T.dontknow]]),
+    onBack: conf, onPick: (v) => { a2 = v; done(); } });
   const done = () => {
-    if (practice) { feedback(s, a1, a2, base + 2, () => { a1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
+    if (practice) { feedback(s, a1, a2, asked, askedF, base + 3, () => { a1 = c1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
     sess.rows.push({ type: 'trial', block: pos.b + 1, position: k, condition: cond, painting: s.id, category: s.rule,
-      q1_answer: a1, q1_correct: a1 === s.rule ? 1 : 0, q2_answer: a2, q2_correct: a2 === s.order[0][0] ? 1 : 0,
-      viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0) });
+      q1_answer: a1, q1_correct: a1 === s.rule ? 1 : 0, q2_answer: a2, q2_correct: a2 === asked ? 1 : 0,
+      viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0),
+      item: `${asked}:${askedF}`, value: c1 });           // item = the feeling asked about in Q2 and its true source; value = confidence in Q1 (1-7)
     const next = pos.i + 1 < 6 ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : { kind: 'rate', b: pos.b };
     save(next); send();
     if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else rate(pos.b);
@@ -246,11 +253,11 @@ function trial(pos) {
   read();
 }
 // practice only: show the right answers, and let people read the description again and retry
-function feedback(s, a1, a2, idx, retry, next, back) {
-  const ok1 = a1 === s.rule, ok2 = a2 === s.order[0][0], ok = ok1 && ok2;
+function feedback(s, a1, a2, asked, askedF, idx, retry, next, back) {
+  const ok1 = a1 === s.rule, ok2 = a2 === asked, ok = ok1 && ok2;
   screen(`<div class="fbhead ${ok ? 'ok' : 'no'}"><span class="big pop" aria-hidden="true">${ok ? '🎉' : '🤔'}</span><h1>${esc(ok ? T.good : T.hmm)}</h1></div>
     <div class="card fb ${ok1 ? 'ok' : 'no'}"><span class="mark" aria-hidden="true">${ok1 ? '✓' : '✗'}</span><p>${esc(T.fbQ1t(T.q1o[s.rule], T.fbQ1[s.rule]))}</p></div>
-    <div class="card fb ${ok2 ? 'ok' : 'no'}"><span class="mark" aria-hidden="true">${ok2 ? '✓' : '✗'}</span><p>${esc(T.fbQ2t(emo(lang, s.order[0][0]), emo(lang, s.model[0])))}</p></div>` +
+    <div class="card fb ${ok2 ? 'ok' : 'no'}"><span class="mark" aria-hidden="true">${ok2 ? '✓' : '✗'}</span><p>${esc(asked === 'people' ? T.fbQ2p(emo(lang, askedF)) : T.fbQ2a(emo(lang, askedF)))}</p></div>` +
     actions(T.cont, { extra: ok ? '' : `<button type="button" class="secondary" id="again">↺ ${esc(T.tryAgain)}</button>` }), { idx, back });
   if (!ok) $('again').addEventListener('click', retry);
   $('go').addEventListener('click', next);
@@ -258,12 +265,12 @@ function feedback(s, a1, a2, idx, retry, next, back) {
 function ready() {
   save({ kind: 'ready' });
   screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🎨</span><h1>${esc(T.readyH)}</h1><p>${esc(T.ready)}</p>
-    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 10 });
+    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 12 });
   $('go').addEventListener('click', () => trial({ b: 0, i: 0 }));
 }
 function rate(b) {
-  const base = 11 + b * 21 + 18, cond = sess.blocks[b].cond;
-  let v1 = null, v2 = null;
+  const base = 13 + b * 29 + 24, cond = sess.blocks[b].cond;
+  let v1 = null, v2 = null, v4 = null;
   const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
   const cheer = () => {
     screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">${['🌱', '🌿', '🌳'][b]}</span><h1>${esc(T.blockDone(b + 1))}</h1>
@@ -275,21 +282,37 @@ function rate(b) {
   let v3 = null;
   const done = () => {
     sess.rows.push({ type: 'rating', block: b + 1, condition: cond, item: 'room_for_own_response', value: v1 },
-      { type: 'rating', block: b + 1, condition: cond, item: 'hard_to_understand', value: v2 });
-    if (b === 1) sess.rows.push({ type: 'check', block: 2, item: 'attention_pass', value: v3 === 2 ? 1 : 0 });
+      { type: 'rating', block: b + 1, condition: cond, item: 'hard_to_understand', value: v2 },
+      { type: 'rating', block: b + 1, condition: cond, item: 'trust', value: v4 });
+    if (b < 2) sess.rows.push({ type: 'check', block: b + 1, item: 'attention_pass', value: v3 === (b === 0 ? 2 : 5) ? 1 : 0 });
     if (b < 2) { save({ kind: 'trial', b: b + 1, i: 0 }); send(); trial({ b: b + 1, i: 0 }); }
-    else { sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish(); }
+    else { save({ kind: 'pref' }); send(); prefs(); }
   };
-  const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => { v2 = v; if (b === 1) q3(); else done(); } });
-  // attention check: a third question after part 2 only ("please choose 2")
-  const q3 = () => scaleQ({ idx: base + 2, head, q: T.attention, n: 7, chosen: v3, onBack: q2, onPick: (v) => { v3 = v; done(); } });
+  const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => { v2 = v; q4(); } });
+  const q4 = () => scaleQ({ idx: base + 3, head, q: T.r3, n: 7, chosen: v4, onBack: q2, onPick: (v) => { v4 = v; if (b < 2) q3(); else done(); } });
+  // attention check: a third question after parts 1 and 2 ("please choose 2", then "please choose 5")
+  const q3 = () => scaleQ({ idx: base + 4, head, q: b === 0 ? T.attention : T.attention2, n: 7, chosen: v3, onBack: q4, onPick: (v) => { v3 = v; done(); } });
   cheer();
 }
+function prefs() {
+  const s = S.varied[0], r = rng(99 + sess.p), opts = shuffle(['A', 'B', 'C'], r);
+  let p1 = null, p2 = null;
+  const head = `<h1>${esc(T.prefH)}</h1><p class="kicker">${esc(T.prefIntro)}</p>`;
+  const opt = () => opts.map((c) => [c, describe(lang, s, c)]);
+  const q1 = () => choice({ idx: 100, head, q: T.prefQ1, chosen: p1, options: opt(), onPick: (v) => { p1 = v; q2(); } });
+  const q2 = () => choice({ idx: 101, head, q: T.prefQ2, chosen: p2, options: opt(), onBack: q1, onPick: (v) => {
+    p2 = v;
+    sess.rows.push({ type: 'pref', painting: s.id, item: 'museum', value: p1, position: opts.indexOf(p1) + 1 },
+      { type: 'pref', painting: s.id, item: 'trust', value: p2, position: opts.indexOf(p2) + 1 });
+    sess.finished = new Date().toISOString(); save({ kind: 'end' }); finish();
+  } });
+  q1();
+}
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 73 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 102 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 73 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 102 });
     $('go').addEventListener('click', finish); return;
   }
   store.del(KEY); store.set(DONE, '1');
