@@ -190,7 +190,7 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
 @media (prefers-reduced-motion: reduce) { main.in > *, .pop, .chip[aria-pressed="true"], .num[aria-checked="true"] { animation: none; } .confetti { display: none; } .spin { animation: none; } }
 @media (max-width: 520px) {
   body { font-size: 17px; } main { padding: 12px 16px 24px; } .actions { margin-inline: -16px; padding-inline: 16px; }
-  .top { padding: 12px 12px 8px; } .brand { font-size: 18px; } .backbtn { padding: 0 12px; } #topback-t { display: none; }
+  .top { padding: 12px 12px 8px; } .brand { font-size: 18px; } .backbtn { padding: 0 12px 0 8px; font-size: 14px; }
   .lang select { max-width: 104px; }
   .desc { font-size: 18px; } .frame { height: 56vh; margin: 0 -8px; } .frame.small { height: 30vh; }
   .tile { font-size: 17px; min-height: 60px; } .collage { height: 124px; } .collage img { width: 76px; height: 106px; }
@@ -222,3 +222,11 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
 .rtrack i { display: block; height: 100%; background: linear-gradient(90deg, var(--purple), var(--gold)); border-radius: 99px; }
 .rnum { font-weight: 700; color: var(--ink); }
 @media (max-width: 520px) { .rbar { grid-template-columns: 1fr auto; } .rbar .rtrack { grid-column: 1 / -1; grid-row: 2; } }
+
+/* language menu: always visible, easy to find */
+.lang { position: relative; }
+.lang::before { content: "🌐"; position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
+.lang select { padding-inline-start: 32px; cursor: pointer; font-weight: 600; }
+html[lang=ur] body { line-height: 1.85; }
+/* small phones: keep the Back button and the language menu readable; the title shrinks to the logo */
+@media (max-width: 420px) { .brand { font-size: 0; gap: 0; } .brand .logo { width: 22px; height: 22px; } .lang select { max-width: 150px; } }

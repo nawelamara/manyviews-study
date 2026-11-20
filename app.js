@@ -97,7 +97,7 @@ document.addEventListener('keydown', (e) => {
 });
 function setLang(l) {
   lang = l; T = UI[l];
-  document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr'; document.title = T.title;
+  document.documentElement.lang = l; document.documentElement.dir = l === 'ar' || l === 'ur' ? 'rtl' : 'ltr'; document.title = T.title;
   $('lang').value = l; $('topback-t').textContent = T.back;
   try { localStorage.setItem('mv-study-lang', l); } catch (e) { /* ignore */ }
 }
@@ -225,10 +225,11 @@ function trial(pos) {
   // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
   const read = () => {
+    redraw = () => trial(pos);
     const tRead = performance.now();
     screen(head + picture(s, true) + `<div class="card desc"><span class="tag">👥 ${esc(T.descH)}</span><p>${esc(describe(lang, s, cond))}</p></div>
       <div class="card desc model"><span class="tag">🤖 ${esc(T.aiH)}</span><p>${esc(describe(lang, s, 'model'))}</p></div>${meanings(s, cond)}` + actions(T.read),
-    { focus: '.desc', idx: base });
+    { focus: '.desc', idx: base, back: practice && pos.i > 0 ? () => trial({ practice: true, i: pos.i - 1 }) : practice ? examples : null });
     $('go').addEventListener('click', () => { readMs += Math.round(performance.now() - tRead); t0 = performance.now(); ask1(); });
   };
   // 2. questions, one per screen (the description is hidden now): Q1 agreement, how sure, Q2 where a feeling came from
@@ -237,7 +238,7 @@ function trial(pos) {
   const asked = r() < 0.5 ? 'people' : 'ai', askedF = asked === 'people' ? s.order[0][0] : s.model[0];   // half the time each
   const q2opts = shuffle(['people', 'ai'], r);
   const ask1 = () => choice({ idx: base + 1, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'few', 'dontknow'].map((v) => [v, T.q1o[v]]),
-    onPick: (v) => { a1 = v; conf(); } });
+    onBack: read, onPick: (v) => { a1 = v; conf(); } });
   const conf = () => scaleQ({ idx: base + 2, head, q: T.confQ, n: 7, chosen: c1, lo: T.confLo, hi: T.confHi, onBack: ask1, onPick: (v) => { c1 = v; ask2(); } });
   const ask2 = () => choice({ idx: base + 3, head, q: T.q2f(emo(lang, askedF)), chosen: a2, options: q2opts.map((v) => [v, T.q2o[v]]).concat([['dontknow', T.dontknow]]),
     onBack: conf, onPick: (v) => { a2 = v; done(); } });
@@ -266,7 +267,7 @@ function feedback(s, a1, a2, asked, askedF, idx, retry, next, back) {
 function ready() {
   save({ kind: 'ready' });
   screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🎨</span><h1>${esc(T.readyH)}</h1><p>${esc(T.ready)}</p>
-    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 12 });
+    <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 12, back: () => trial({ practice: true, i: S.practice.length - 1 }) });
   $('go').addEventListener('click', () => trial({ b: 0, i: 0 }));
 }
 function rate(b) {
@@ -295,9 +296,9 @@ function rate(b) {
   const q3 = () => scaleQ({ idx: base + 4, head, q: b === 0 ? T.attention : T.attention2, n: 7, chosen: v3, onBack: q4, onPick: (v) => { v3 = v; done(); } });
   cheer();
 }
-function prefs() {
+function prefs(prev = {}) {
   const s = S.varied[0], r = rng(99 + sess.p), opts = shuffle(['A', 'B', 'C'], r);
-  let p1 = null, p2 = null;
+  let p1 = prev.p1 || null, p2 = prev.p2 || null;
   const head = `<h1>${esc(T.prefH)}</h1><p class="kicker">${esc(T.prefIntro)}</p>`;
   const opt = () => opts.map((c) => [c, describe(lang, s, c)]);
   const q1 = () => choice({ idx: 100, head, q: T.prefQ1, chosen: p1, options: opt(), onPick: (v) => { p1 = v; q2(); } });
@@ -305,13 +306,19 @@ function prefs() {
     p2 = v;
     sess.rows.push({ type: 'pref', painting: s.id, item: 'museum', value: p1, position: opts.indexOf(p1) + 1 },
       { type: 'pref', painting: s.id, item: 'trust', value: p2, position: opts.indexOf(p2) + 1 });
-    save({ kind: 'comment' }); comment();
+    save({ kind: 'comment' }); comment({ p1, p2 });
   } });
-  q1();
+  if (prev.p2) q2(); else q1();
 }
 // optional comment at the very end (helps to find unclear parts); kept to 500 characters
-function comment() {
-  screen(`<h2 class="q">${esc(T.commentQ)}</h2><textarea id="cmt" class="cmt" rows="4" maxlength="500" placeholder="${esc(T.commentPh)}"></textarea>` + actions(T.finish), { idx: 102, focus: '.q' });
+function comment(prev = {}) {
+  const old = sess.rows.filter((r) => r.type === 'pref');
+  const back = () => {   // undo the two preference answers (not sent yet) and show the last question again
+    for (let i = sess.rows.length - 1; i >= 0; i--) if (sess.rows[i].type === 'pref') sess.rows.splice(i, 1);
+    save({ kind: 'pref' });
+    prefs({ p1: prev.p1 || (old[0] && old[0].value), p2: prev.p2 || (old[1] && old[1].value) });
+  };
+  screen(`<h2 class="q">${esc(T.commentQ)}</h2><textarea id="cmt" class="cmt" rows="4" maxlength="500" placeholder="${esc(T.commentPh)}"></textarea>` + actions(T.finish), { idx: 102, focus: '.q', back });
   $('go').addEventListener('click', () => {
     const v = $('cmt').value.trim().slice(0, 500);
     if (v) sess.rows.push({ type: 'comment', item: 'confusing', value: v });
@@ -353,7 +360,18 @@ async function finish() {
 // ---- start
 const sel = $('lang');
 sel.innerHTML = LANGS.map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
-sel.addEventListener('change', () => { if (!sess.id) { setLang(sel.value); welcome(); } else sel.value = lang; });
+// the language can be changed on any page: the current screen is drawn again in the new language
+// (inside a painting, the painting starts again from its description; answers already given are kept)
+let redraw = null;
+const track = (fn) => function (...args) { redraw = () => fn(...args); return fn(...args); };
+welcome = track(welcome); consent = track(consent); intro = track(intro); examples = track(examples); trial = track(trial);
+feedback = track(feedback); ready = track(ready); rate = track(rate); prefs = track(prefs); comment = track(comment); finish = track(finish);
+sel.addEventListener('change', () => {
+  const before = lang;
+  setLang(sel.value);
+  if (sess.id && before !== lang) { sess.rows.push({ type: 'lang', item: before, value: lang }); save(sess.next); }
+  (redraw || welcome)();
+});
 let saved = 'en'; try { saved = localStorage.getItem('mv-study-lang') || 'en'; } catch (e) { /* ignore */ }
 const fromUrl = (location.search.match(/[?&]lang=([\w-]+)/) || [])[1];
 setLang(UI[fromUrl] ? fromUrl : UI[saved] ? saved : 'en');

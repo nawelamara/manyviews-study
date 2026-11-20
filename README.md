@@ -1,7 +1,7 @@
-# Many Views – online study (4 languages)
+# Many Views – online study (5 languages)
 
 A public web page for the description study (A single emotion / B fixed top 3 / C agreement-adaptive), in English,
-Traditional Chinese, French and Arabic. Anonymous answers go to a Google Sheet you own.
+Traditional Chinese, French, Arabic and Urdu. Anonymous answers go to a Google Sheet you own.
 
 **The page is closed (`OPEN: false` in `config.js`) until the ethics review or exemption is approved and the supervisor agrees.**
 While closed, you can still test it with `?preview=1` at the end of the address (answers in preview are marked, and no
@@ -14,6 +14,7 @@ parts 1 and 2: "choose 2", "choose 5") → 2 preference questions (A, B and C si
 Per painting: the painting with the description and the labelled AI guess → the text is hidden → Q1 "how did the people
 before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: what the people chose most, or the AI's guess?".
 Answers are sent after every painting; progress is kept in the browser, so a refresh can continue.
+The language menu (🌐, top right) works on every page; a change is saved as a "lang" row in the sheet.
 
 ## Set it up (once)
 1. **Google Sheet** (use the lab's or supervisor's Google account if possible): create a new Sheet, name it
@@ -33,7 +34,7 @@ Answers are sent after every painting; progress is kept in the browser, so a ref
 
 ## Open it (only after approval)
 Set `OPEN: true` in `config.js`, upload the folder again (step 4). Share the link; add `?lang=zh-Hant`,
-`?lang=fr` or `?lang=ar` to open in that language (e.g. Chinese link for Taiwanese groups).
+`?lang=fr`, `?lang=ar` or `?lang=ur` to open in that language (e.g. Chinese link for Taiwanese groups).
 
 ## Balance
 The sheet hands out participant numbers 1, 2, 3, … → 6 condition orders × 3 painting rotations repeat every 18 people.
@@ -45,7 +46,7 @@ It removes unfinished sessions and attention-check failures and prints the resul
 
 ## Before opening — checklist
 - [ ] Ethics approval / exemption; supervisor agrees; the online version (public recruitment, Google Sheet) is in the application
-- [ ] Translations checked by a native speaker (zh-Hant, fr, ar)
+- [ ] Translations checked by a native speaker (zh-Hant, fr, ar, ur)
 - [ ] `CONTACT` filled in; consent text approved by the ethics committee
 - [ ] Test run in every language; test rows deleted; counter reset
 - [ ] 5-person pilot (in preview or a separate sheet), then fix anything unclear
