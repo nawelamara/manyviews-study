@@ -26,8 +26,9 @@ Fixed before data collection (design review):
 - Q2 asks about the top word of exactly one source ("what the people chose most" / "the AI's main guess").
   B and C show the same 3 viewer emotions, so Q2 difficulty is the same for B and C. Q2 is reported on all trials and on
   trials where the word does not also appear in the other list.
-- The 'opposite directions' sentence belongs to C only (supervisor's wording); C vs B is also reported on paintings with
-  and without it.
+- The 'opposite directions' sentence belongs to C only (supervisor's wording). It occurs on 5 of the 23 study paintings, so
+  report that count; the with/without split in analyze_study.py has small cells and is descriptive only.
+- One name for the people in the data: "viewers" (descriptions, questions and feedback). Time shown: 20-25 minutes.
 Answers are sent after every painting; progress is kept in the browser, so a refresh can continue.
 The language menu (🌐, top right) works on every page; a change is saved as a "lang" row in the sheet.
 

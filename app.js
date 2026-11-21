@@ -289,7 +289,7 @@ function rate(b) {
   const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
   const cheer = () => {
     screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">${['🌱', '🌿', '🌳'][b]}</span><h1>${esc(T.blockDone(b + 1))}</h1>
-      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div>${T.cheer ? `<p>${esc(T.cheer[b])}</p>` : ''}<p class="timeleft">⏱ ${esc(T.timeLeft((2 - b) * 6 + 1))}</p></div>` +
+      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div>${T.cheer ? `<p>${esc(T.cheer[b])}</p>` : ''}<p class="timeleft">⏱ ${esc(T.timeLeft((2 - b) * 7 + 3))}</p></div>` +
       actions(T.cont), { idx: base });
     $('go').addEventListener('click', q1);
   };
