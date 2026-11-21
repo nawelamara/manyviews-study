@@ -13,11 +13,14 @@ Language → information + consent (18 or older, agree) → how it works → the
 parts 1 and 2: "choose 2", "choose 5") → 2 preference questions (A, B and C side by side) → thank you.
 Per painting: the painting with the description and the labelled AI guess → the text is hidden → Q1 "how did the people
 before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: what the people chose most, or the AI's guess?".
-Q1 has two answers ("most people picked the same emotion" / "people picked several different emotions", + "not sure").
+Q1 (Nov 21) is a number, as in Budescu, Broomell & Por (2009): "If 10 new people looked at this painting, how many would pick
+<the emotion most viewers chose>?" (0-10). True value = 10 x count / viewers; main outcome = |answer - true| (also bias = answer - true).
+q1_answer = the number, q1_correct = within 1 of the true value. Earlier versions (Q1 as a category) are left out by analyze_study.py.
+After part 3: 3 numeracy questions (Schwartz et al. 1997; rows type 'numeracy', q1_answer = what was typed, value = correct 0/1).
 Paintings: 9 'leader' + 9 'varied' per person, drawn from a pool of 11 + 12; 3 of each type per description.
 (The first version also had a 'too few answers' type; it was dropped because all its paintings had 9 of 10 viewers
 choosing an emotion, which does not look like 'too few'. analyze_study.py leaves out sessions from that version.)
-In paper: for C, Q1 is close to a manipulation check (C states the agreement); the main test is C vs B.
+In paper: the design follows the words / numbers / words + numbers paradigm (Budescu et al. 2009); main test C vs B on Q1 error.
 Fixed before data collection (design review):
 - Practice description rotates: B for participants 1-6, C for 7-12, B for 13-18, ... (a 'practice' row records it).
 - Q2 asks about the top word of exactly one source ("what the people chose most" / "the AI's main guess").

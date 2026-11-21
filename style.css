@@ -232,3 +232,9 @@ html[lang=ur] body { line-height: 1.85; }
 @media (max-width: 420px) { .brand { font-size: 0; gap: 0; } .brand .logo { width: 22px; height: 22px; } .lang select { max-width: 150px; } }
 .resnote { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--lav); color: var(--ink); font-size: 15px; line-height: 1.5; }
 .rbar .rnum { white-space: nowrap; }
+/* 0-10 estimate: one row on wide screens, two rows (0-5, 6-10) on phones so every button stays easy to tap */
+.scale.wide .nums { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 560px) { .scale.wide .nums { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; } .scale.wide .num { height: 54px; } }
+/* number answers (numeracy questions) */
+.numin { width: 100%; font: inherit; font-size: 22px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); margin: 8px 0 4px; }
+.numin:focus { outline: none; border-color: var(--purple-2); box-shadow: 0 0 0 4px var(--lav); }
