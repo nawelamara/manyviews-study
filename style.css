@@ -230,3 +230,5 @@ details.gloss ul { margin: 6px 0 0; padding-inline-start: 20px; } details.gloss 
 html[lang=ur] body { line-height: 1.85; }
 /* small phones: keep the Back button and the language menu readable; the title shrinks to the logo */
 @media (max-width: 420px) { .brand { font-size: 0; gap: 0; } .brand .logo { width: 22px; height: 22px; } .lang select { max-width: 150px; } }
+.resnote { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--lav); color: var(--ink); font-size: 15px; line-height: 1.5; }
+.rbar .rnum { white-space: nowrap; }

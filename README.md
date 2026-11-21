@@ -13,6 +13,18 @@ Language → information + consent (18 or older, agree) → how it works → the
 parts 1 and 2: "choose 2", "choose 5") → 2 preference questions (A, B and C side by side) → thank you.
 Per painting: the painting with the description and the labelled AI guess → the text is hidden → Q1 "how did the people
 before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: what the people chose most, or the AI's guess?".
+Q1 has two answers ("most people picked the same emotion" / "people picked several different emotions", + "not sure").
+Paintings: 9 'leader' + 9 'varied' per person, drawn from a pool of 11 + 12; 3 of each type per description.
+(The first version also had a 'too few answers' type; it was dropped because all its paintings had 9 of 10 viewers
+choosing an emotion, which does not look like 'too few'. analyze_study.py leaves out sessions from that version.)
+In paper: for C, Q1 is close to a manipulation check (C states the agreement); the main test is C vs B.
+Fixed before data collection (design review):
+- Practice description rotates: B for participants 1-6, C for 7-12, B for 13-18, ... (a 'practice' row records it).
+- Q2 asks about the top word of exactly one source ("what the people chose most" / "the AI's main guess").
+  B and C show the same 3 viewer emotions, so Q2 difficulty is the same for B and C. Q2 is reported on all trials and on
+  trials where the word does not also appear in the other list.
+- The 'opposite directions' sentence belongs to C only (supervisor's wording); C vs B is also reported on paintings with
+  and without it.
 Answers are sent after every painting; progress is kept in the browser, so a refresh can continue.
 The language menu (🌐, top right) works on every page; a change is saved as a "lang" row in the sheet.
 

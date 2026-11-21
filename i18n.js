@@ -77,8 +77,9 @@ function describe(lang, s, cond) {
   if (cond === 'model') return T.model();
   if (cond === 'A') return T.A();
   if (cond === 'B') return T.B();
-  // C never lists more than 3 emotions (same amount of information as B); the 'opposite directions' sentence is
-  // added only when the 3 emotions shown include both a positive and a negative one.
+  // C lists the same 3 emotions and counts as B, plus the agreement sentence. The 'opposite directions' sentence is part of C
+  // (the supervisor's wording) and is added only when the 3 emotions shown include both a positive and a negative one; so C
+  // can carry one more hint than B. analyze_study.py reports C vs B separately for paintings with and without it.
   const shown = s.order.slice(0, 3).map(([f]) => f);
   const opp = shown.some((f) => POSITIVE.includes(f)) && shown.some((f) => NEGATIVE.includes(f));
   return T[s.rule]() + (opp ? T.opp : '');
@@ -499,3 +500,57 @@ UI.ur = {
   debrief: 'آڈیو گائیڈز اور AI ایپس اکثر کہتی ہیں کہ کوئی پینٹنگ لوگوں کو ایک ہی جذبہ محسوس کراتی ہے۔ لیکن لوگ اکثر مختلف چیزیں محسوس کرتے ہیں۔ آپ نے تین قسم کی تفصیلات پڑھیں: صرف ایک جذبہ (A)، اعداد کے ساتھ سب سے زیادہ 3 (B)، اور ایک جملہ جو لوگوں کے اتفاق کے مطابق بدلتا ہے (C)۔ آپ کے جوابات دکھاتے ہیں کہ کون سی تفصیل ناظرین کو سچ سب سے واضح طور پر بتاتی ہے۔ مدد کا شکریہ!',
   lang: 'زبان',
 };
+
+// Two answers for the main question (the 'too few' type was dropped). The answers avoid the words used in description C
+// ("varied", "more viewers selected"), so C cannot be answered by matching words.
+const TWO = {
+  en: { q1o: { leader: 'Most people picked the same emotion', varied: 'People picked several different emotions', dontknow: "I'm not sure" },
+    exIntro: 'After each painting you will be asked how the people before you felt. There are two possible answers:' },
+  'zh-Hant': { q1o: { leader: '大多數人選了同一種情緒', varied: '大家選了好幾種不同的情緒', dontknow: '我不確定' },
+    exIntro: '每幅畫之後，我們會問您：之前的人有什麼感受。可能的答案有兩種：' },
+  fr: { q1o: { leader: 'La plupart des gens ont choisi la même émotion', varied: 'Les gens ont choisi plusieurs émotions différentes', dontknow: 'Je ne suis pas sûr(e)' },
+    exIntro: 'Après chaque tableau, on vous demandera ce qu’ont ressenti les personnes avant vous. Il y a deux réponses possibles :' },
+  ar: { q1o: { leader: 'اختار معظم الناس الشعور نفسه', varied: 'اختار الناس عدة مشاعر مختلفة', dontknow: 'لست متأكدًا' },
+    exIntro: 'بعد كل لوحة سنسألك عمّا شعر به الأشخاص الذين سبقوك. هناك إجابتان ممكنتان:' },
+  ur: { q1o: { leader: 'زیادہ تر لوگوں نے ایک ہی جذبہ چنا', varied: 'لوگوں نے کئی مختلف جذبات چنے', dontknow: 'مجھے یقین نہیں' },
+    exIntro: 'ہر پینٹنگ کے بعد آپ سے پوچھا جائے گا کہ آپ سے پہلے لوگوں نے کیا محسوس کیا۔ دو ممکنہ جواب ہیں:' },
+};
+Object.keys(TWO).forEach((l) => Object.assign(UI[l], TWO[l]));
+
+// Results at the end: per kind of description (no letters, no single total), with the reason the first row is low
+// shown right under the rows. The debrief no longer uses the letters A/B/C (participants never saw them).
+const RES = {
+  en: { rowNames: { A: 'Descriptions with one emotion only', B: 'Descriptions with the top 3 and numbers', C: 'Descriptions with a sentence about agreement' },
+    resOf: (k, n) => `${k} of ${n}`,
+    resNote: 'The first kind does not say whether people agreed, so from it you could only guess. That is not your mistake. It is the point of the study: this is how most audio guides describe art today.',
+    debrief: 'Audio guides and AI apps often say that a painting makes people feel one emotion. But people often feel different things. You read three kinds of descriptions: one emotion only, the top 3 with numbers, and a sentence about how much people agreed. Your answers help show which one tells visitors the truth most clearly. Thank you for helping!' },
+  'zh-Hant': { rowNames: { A: '只有一種情緒的描述', B: '前三名加人數的描述', C: '說明大家是否一致的描述' },
+    resOf: (k, n) => `${n} 幅中答對 ${k} 幅`,
+    resNote: '第一種描述沒有說明大家的感受是否一致，所以只能用猜的。這不是您的錯，這正是本研究的重點：現在大多數語音導覽就是這樣描述藝術作品的。',
+    debrief: '語音導覽和 AI 應用程式常說一幅畫讓人感到某一種情緒，但人們的感受常常不同。您讀到了三種描述：只有一種情緒、前三名加人數，以及說明大家是否一致的句子。您的回答能幫助我們找出哪一種最能清楚、真實地告訴觀眾。謝謝您的幫忙！' },
+  fr: { rowNames: { A: 'Descriptions avec une seule émotion', B: 'Descriptions avec le top 3 et les nombres', C: 'Descriptions avec une phrase sur l’accord' },
+    resOf: (k, n) => `${k} sur ${n}`,
+    resNote: 'Le premier type ne dit pas si les gens étaient d’accord : avec lui, on ne peut que deviner. Ce n’est pas votre erreur. C’est justement le sujet de l’étude : c’est ainsi que la plupart des audioguides décrivent l’art aujourd’hui.',
+    debrief: 'Les audioguides et les applications d’IA disent souvent qu’un tableau fait ressentir une seule émotion. Mais les gens ressentent souvent des choses différentes. Vous avez lu trois types de descriptions : une seule émotion, le top 3 avec les nombres, et une phrase sur le degré d’accord entre les personnes. Vos réponses aident à savoir laquelle dit la vérité le plus clairement aux visiteurs. Merci pour votre aide !' },
+  ar: { rowNames: { A: 'أوصاف بشعور واحد فقط', B: 'أوصاف بأكثر 3 مشاعر مع الأعداد', C: 'أوصاف بجملة عن مدى الاتفاق' },
+    resOf: (k, n) => `${k} من ${n}`,
+    resNote: 'النوع الأول لا يقول هل اتفق الناس أم لا، لذلك لم يكن بإمكانك إلا التخمين. هذا ليس خطأك، بل هو جوهر الدراسة: هكذا تصف معظم الأدلة الصوتية الفن اليوم.',
+    debrief: 'كثيرًا ما تقول الأدلة الصوتية وتطبيقات الذكاء الاصطناعي إن لوحة ما تجعل الناس يشعرون بشعور واحد. لكن الناس غالبًا ما يشعرون بأشياء مختلفة. قرأتَ ثلاثة أنواع من الأوصاف: شعور واحد فقط، وأكثر 3 مشاعر مع الأعداد، وجملة عن مدى اتفاق الناس. تساعد إجاباتك على معرفة أيّها ينقل الحقيقة إلى الزوار بأوضح شكل. شكرًا لمساعدتك!' },
+  ur: { rowNames: { A: 'صرف ایک جذبے والی تفصیلات', B: 'اعداد کے ساتھ سب سے زیادہ 3 والی تفصیلات', C: 'اتفاق کے بارے میں جملے والی تفصیلات' },
+    resOf: (k, n) => `${n} میں سے ${k}`,
+    resNote: 'پہلی قسم یہ نہیں بتاتی کہ لوگ متفق تھے یا نہیں، اس لیے اس سے آپ صرف اندازہ لگا سکتے تھے۔ یہ آپ کی غلطی نہیں۔ یہی اس مطالعے کا مقصد ہے: آج زیادہ تر آڈیو گائیڈز فن کو اسی طرح بیان کرتی ہیں۔',
+    debrief: 'آڈیو گائیڈز اور AI ایپس اکثر کہتی ہیں کہ کوئی پینٹنگ لوگوں کو ایک ہی جذبہ محسوس کراتی ہے۔ لیکن لوگ اکثر مختلف چیزیں محسوس کرتے ہیں۔ آپ نے تین قسم کی تفصیلات پڑھیں: صرف ایک جذبہ، اعداد کے ساتھ سب سے زیادہ 3، اور لوگوں کے اتفاق کے بارے میں ایک جملہ۔ آپ کے جوابات یہ جاننے میں مدد کرتے ہیں کہ کون سی تفصیل ناظرین کو سچ سب سے واضح طور پر بتاتی ہے۔ مدد کا شکریہ!' },
+};
+Object.keys(RES).forEach((l) => Object.assign(UI[l], RES[l]));
+
+// Q2: the asked word is always the TOP word of exactly one source (people's most chosen, or the AI's main guess; the two are
+// never the same word in the pool), so "the AI's main guess" makes the right answer well defined even when the same word
+// also appears lower in the other list.
+const Q2T = {
+  en: { ai: 'It is the AI’s main guess', fb: (e) => `“${e}” was the AI’s main guess, not what the people chose most.` },
+  'zh-Hant': { ai: '這是 AI 的主要猜測', fb: (e) => `「${e}」是 AI 的主要猜測，不是人們最常選擇的。` },
+  fr: { ai: 'C’est la principale supposition de l’IA', fb: (e) => `« ${e} » était la principale supposition de l’IA, pas ce que les gens ont le plus choisi.` },
+  ar: { ai: 'هذا التخمين الرئيسي للذكاء الاصطناعي', fb: (e) => `«${e}» كان التخمين الرئيسي للذكاء الاصطناعي، وليس ما اختاره الناس أكثر من غيره.` },
+  ur: { ai: 'یہ AI کا اصل اندازہ ہے', fb: (e) => `«${e}» AI کا اصل اندازہ تھا، وہ نہیں جو لوگوں نے سب سے زیادہ منتخب کیا۔` },
+};
+Object.keys(Q2T).forEach((l) => { UI[l].q2o = Object.assign({}, UI[l].q2o, { ai: Q2T[l].ai }); UI[l].fbQ2a = Q2T[l].fb; });

@@ -19,14 +19,18 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const $ = (id) => document.getElementById(id);
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function shuffle(xs, r) { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-// Each participant gets 6 paintings of each type drawn at random from the pool (12 leader, 12 varied, 6 too-few),
-// 2 of each type per condition, so paintings can be treated as a random sample (not a fixed set). Condition order
+// Each participant gets 9 paintings of each type drawn at random from the pool (11 leader, 12 varied),
+// 3 of each type per condition, so paintings can be treated as a random sample (not a fixed set). Condition order
 // is counterbalanced over 6 orders.
 function plan(p) {
   const order = ORDERS[(p - 1) % 6], r = rng(1000 + p), pick = {};
-  ['leader', 'varied', 'few'].forEach((cat) => { pick[cat] = shuffle(S[cat], r).slice(0, 6); });
-  return { order, rot: 0, blocks: order.split('').map((cond, ci) => ({ cond, items: shuffle(['leader', 'varied', 'few'].flatMap((cat) => pick[cat].slice(2 * ci, 2 * ci + 2)), r) })) };
+  ['leader', 'varied'].forEach((cat) => { pick[cat] = shuffle(S[cat], r).slice(0, 9); });
+  return { order, rot: 0, blocks: order.split('').map((cond, ci) => ({ cond, items: shuffle(['leader', 'varied'].flatMap((cat) => pick[cat].slice(3 * ci, 3 * ci + 3)), r) })) };
 }
+
+// Practice description: B for participants 1-6, C for 7-12, B for 13-18, ... so the practice (with feedback) does not train
+// only one of the two descriptions being compared. Every block of 6 numbers has all 6 condition orders, so this is balanced.
+const practiceCond = () => (Math.floor((sess.p - 1) / 6) % 2 ? 'C' : 'B');
 
 // ---- sending (Google Apps Script web app); no-cors, so the whole session is resent each time and the sheet keeps one copy
 const sess = { rows: [] };
@@ -177,7 +181,7 @@ function welcome() {
     screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">🖼️</span><h1>${esc(T.endH)}</h1><p>${esc(T.doneBefore)}</p></div>`, { idx: TOTAL });
     return;
   }
-  const pics = [S.leader[0], S.varied[2], S.few[3], S.leader[3], S.varied[0]];
+  const pics = [S.leader[0], S.varied[2], S.leader[5], S.leader[3], S.varied[0]];
   screen(`<div class="hero"><div class="collage" aria-hidden="true">${pics.map((s) => imgTag(s, 'alt=""')).join('')}</div>
     <span class="eyebrow">Many Views · ${esc(T.studyWord)}</span>
     <h1>${esc(T.title)}</h1><p class="sub">${esc(T.sub || T.welcomeSub)}</p>
@@ -200,6 +204,7 @@ function consent() {
       const [p, by] = await nextNumber(); const pl = plan(p);
       Object.assign(sess, { id: `S${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, p, order: pl.order, rot: pl.rot, blocks: pl.blocks,
         started: new Date().toISOString(), assignedBy: by });
+      sess.rows.push({ type: 'practice', item: 'condition', value: practiceCond() });
     }
     save({ kind: 'intro' });
     intro();
@@ -213,12 +218,12 @@ function intro() {
 }
 function examples() {
   screen(`<h1>${esc(T.exH)}</h1><p class="lead">${esc(T.exIntro)}</p>
-    <div class="exlist">${['leader', 'varied', 'few'].map((k, i) => `<div class="card ex"><span class="key">${i + 1}</span><div><b>${esc(T.q1o[k])}</b><p>${esc(T.ex[k])}</p></div></div>`).join('')}</div>
+    <div class="exlist">${['leader', 'varied'].map((k, i) => `<div class="card ex"><span class="key">${i + 1}</span><div><b>${esc(T.q1o[k])}</b><p>${esc(T.ex[k])}</p></div></div>`).join('')}</div>
     <p class="muted center">🤖 ${esc(T.exNote)}</p>` + actions(T.exGo), { idx: 3, back: intro });
   $('go').addEventListener('click', () => trial({ practice: true, i: 0 }));
 }
 function trial(pos) {
-  const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? 'B' : sess.blocks[pos.b].cond;
+  const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? practiceCond() : sess.blocks[pos.b].cond;
   const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
   const base = practice ? 4 + pos.i * 4 : 13 + pos.b * 29 + pos.i * 4;
   const head = progress(k, total, practice) + (!practice && k === 10 ? `<p class="halfway pop">${esc(T.halfway)}</p>` : '');
@@ -237,7 +242,7 @@ function trial(pos) {
   const r = rng(7 + sess.p * 100 + (practice ? pos.i : 10 + k));
   const asked = r() < 0.5 ? 'people' : 'ai', askedF = asked === 'people' ? s.order[0][0] : s.model[0];   // half the time each
   const q2opts = shuffle(['people', 'ai'], r);
-  const ask1 = () => choice({ idx: base + 1, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'few', 'dontknow'].map((v) => [v, T.q1o[v]]),
+  const ask1 = () => choice({ idx: base + 1, head, q: T.q1, chosen: a1, options: ['leader', 'varied', 'dontknow'].map((v) => [v, T.q1o[v]]),
     onBack: read, onPick: (v) => { a1 = v; conf(); } });
   const conf = () => scaleQ({ idx: base + 2, head, q: T.confQ, n: 7, chosen: c1, lo: T.confLo, hi: T.confHi, onBack: ask1, onPick: (v) => { c1 = v; ask2(); } });
   const ask2 = () => choice({ idx: base + 3, head, q: T.q2f(emo(lang, askedF)), chosen: a2, options: q2opts.map((v) => [v, T.q2o[v]]).concat([['dontknow', T.dontknow]]),
@@ -326,15 +331,14 @@ function comment(prev = {}) {
   });
 }
 // the participant's own results (shown only after all answers are saved, so they cannot change any answer)
-function results() {
+function results() {   // per kind of description, no single total; the reason the first row is low sits right under it
   const tr = sess.rows.filter((r) => r.type === 'trial');
   if (!tr.length) return '';
-  const ok = tr.filter((r) => r.q1_correct).length, by = {};
+  const by = {};
   ['A', 'B', 'C'].forEach((c) => { const x = tr.filter((r) => r.condition === c); by[c] = [x.filter((r) => r.q1_correct).length, x.length]; });
-  const best = ['C', 'B', 'A'].reduce((m, c) => (by[c][0] > by[m][0] ? c : m), 'C');
-  return `<div class="card results"><h2>${esc(T.resH)}</h2><p class="big-num">${ok} / ${tr.length}</p><p>${esc(T.resScore(ok, tr.length))}</p>
-    ${['A', 'B', 'C'].map((c) => `<div class="rbar"><span class="rname">${c} · ${esc(T.dNames[c])}</span><span class="rtrack"><i style="width:${by[c][1] ? (100 * by[c][0]) / by[c][1] : 0}%"></i></span><span class="rnum">${by[c][0]}/${by[c][1]}</span></div>`).join('')}
-    <p class="muted">${esc(T.resBest(T.dNames[best]))}</p></div>
+  return `<div class="card results"><h2>${esc(T.resH)}</h2>
+    ${['A', 'B', 'C'].map((c) => `<div class="rbar"><span class="rname">${esc(T.rowNames[c])}</span><span class="rtrack"><i style="width:${by[c][1] ? (100 * by[c][0]) / by[c][1] : 0}%"></i></span><span class="rnum">${esc(T.resOf(by[c][0], by[c][1]))}</span></div>`).join('')}
+    <p class="resnote">${esc(T.resNote)}</p></div>
     <div class="card"><h2>${esc(T.debriefH)}</h2><p>${esc(T.debrief)}</p></div>`;
 }
 async function finish() {

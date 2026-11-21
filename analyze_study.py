@@ -24,6 +24,9 @@ d = d[d["session_id"].isin(fin)]
 fail = d.loc[(d["type"] == "check") & (num(d["value"]) == 0), "session_id"].unique()
 print(f"Failed an attention check (left out): {len(fail)}")
 d = d[~d["session_id"].isin(fail)]
+old = d.loc[d["category"] == "few", "session_id"].unique()   # sessions from the first version (with the dropped "too few" type)
+if len(old): print(f"Sessions from the old version with 'too few' paintings (left out): {len(old)}")
+d = d[~d["session_id"].isin(old)]
 if "assigned_by" in d:
     prev = d.loc[d["assigned_by"].astype(str).str.endswith("preview"), "session_id"].unique()
     if len(prev): print(f"Preview (test) sessions left out: {len(prev)}")
@@ -41,7 +44,7 @@ def per_person(x):
 pp = per_person(t)
 print("\nMean per condition (share correct; confidence 1-7):")
 print(pp.groupby("condition")[["q1", "q2", "conf"]].mean().round(3))
-print("\nQ1 correct by painting type (leader / varied / few) and condition:")
+print("\nQ1 correct by painting type (leader / varied) and condition:")
 print(t.pivot_table(index="category", columns="condition", values="q1_correct", aggfunc="mean").round(3))
 print("\nWhat people answered to Q1, by condition (share of answers):")
 print(pd.crosstab(t["condition"], t["q1_answer"], normalize="index").round(3))
@@ -60,8 +63,8 @@ NEG = {"anger", "arrogance", "disgust", "fear", "pessimism", "regret", "sadness"
 stim_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stimuli.js")
 S = json.loads(re.search(r"window.STIMULI = (\{.*\});", open(stim_path, encoding="utf-8").read(), re.S).group(1))
 direction = {}
-for cat in ["leader", "varied", "few"]:
-    for s in S[cat]:
+for cat in ["leader", "varied", "practice"]:
+    for s in S.get(cat, []):
         top3 = {f for f, c in s["order"][:3]}
         direction[s["id"]] = "opposite" if (top3 & POS and top3 & NEG) else "same"
 t["direction"] = t["painting"].map(direction)
@@ -80,6 +83,35 @@ try:   # paintings and participants as random effects (needs: pip install statsm
     print(m.summary().tables[1])
 except Exception as e:
     print(f"\n(Mixed model skipped: {e.__class__.__name__}. Install statsmodels to run it.)")
+
+# ---- checks fixed before data collection (from the design review) ----
+# 1. Practice description: B for participants 1-6, C for 7-12, B for 13-18, ... (the practice gives feedback, so it trains
+#    one description). Report C vs B by which description was practised.
+t["practised"] = t["participant"].map(lambda p: "C" if (int(p) - 1) // 6 % 2 else "B")
+print("\nQ1 correct by condition and by the description used in the practice:")
+print(t.pivot_table(index="practised", columns="condition", values="q1_correct", aggfunc="mean").round(3))
+# 2. Q2 overlap: the asked word also appears in the other list shown on screen. B and C show the same 3 viewer emotions, so
+#    the overlap is identical for B and C (the C vs B test is fair); A shows one viewer emotion, so it differs for A only.
+#    Rule fixed now: Q2 is reported on all trials and on trials without overlap.
+VIEW = {}
+for cat in ["leader", "varied", "practice"]:
+    for s in S.get(cat, []):
+        VIEW[s["id"]] = ([f for f, c in s["order"][:3]], s["model"][:3])
+def overlap(row):
+    side, word = str(row["item"]).split(":", 1)
+    v3, m3 = VIEW[row["painting"]]
+    shown = v3[:1] if row["condition"] == "A" else v3
+    return int(word in (m3 if side == "people" else shown))
+t["q2_overlap"] = t.apply(overlap, axis=1)
+t["q2_side"] = t["item"].astype(str).str.split(":").str[0]
+print("\nQ2 correct by condition, side asked and overlap (1 = the word was also in the other list):")
+print(t.pivot_table(index=["q2_side", "q2_overlap"], columns="condition", values="q2_correct", aggfunc=["mean", "count"]).round(3))
+print("\nQ2 correct by condition, trials without overlap only:")
+print(t[t["q2_overlap"] == 0].groupby("condition")["q2_correct"].agg(["mean", "count"]).round(3))
+# 3. The 'opposite directions' sentence is part of C only. Report C vs B on paintings with and without it.
+t["opp_sentence"] = t["painting"].map(lambda i: direction.get(i) == "opposite")
+print("\nQ1 correct, B vs C, paintings with / without the 'opposite directions' sentence (C only shows it):")
+print(t[t["condition"].isin(["B", "C"])].pivot_table(index="opp_sentence", columns="condition", values="q1_correct", aggfunc=["mean", "count"]).round(3))
 
 r = d[d["type"] == "rating"]
 print("\nRatings (1-7), mean by condition:")
