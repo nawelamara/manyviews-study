@@ -4,7 +4,7 @@
    (CONFIG.ENDPOINT) after every painting and at the end; progress is kept in the browser, so a refresh can continue.
    Balanced assignment: the sheet gives the next participant number (6 orders x 3 painting rotations = 18 combinations);
    if it cannot be reached, a random number is used. Closed unless CONFIG.OPEN and CONFIG.ENDPOINT are set (test: ?preview=1).
-   In the 18 study paintings the description cannot be reopened once the questions start (that is what is measured);
+   In the 12 study paintings the description cannot be reopened once the questions start (that is what is measured);
    in the practice it can ("Read it again"). */
 'use strict';
 const C = window.CONFIG, S = window.STIMULI;
@@ -19,13 +19,13 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const $ = (id) => document.getElementById(id);
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function shuffle(xs, r) { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-// Each participant gets 9 paintings of each type drawn at random from the pool (11 leader, 12 varied),
-// 3 of each type per condition, so paintings can be treated as a random sample (not a fixed set). Condition order
+// Each participant gets 6 paintings of each type drawn at random from the pool (11 leader, 12 varied),
+// 2 of each type per condition (12 paintings, 3 parts of 4), so paintings can be treated as a random sample (not a fixed set). Condition order
 // is counterbalanced over 6 orders.
 function plan(p) {
   const order = ORDERS[(p - 1) % 6], r = rng(1000 + p), pick = {};
-  ['leader', 'varied'].forEach((cat) => { pick[cat] = shuffle(S[cat], r).slice(0, 9); });
-  return { order, rot: 0, blocks: order.split('').map((cond, ci) => ({ cond, items: shuffle(['leader', 'varied'].flatMap((cat) => pick[cat].slice(3 * ci, 3 * ci + 3)), r) })) };
+  ['leader', 'varied'].forEach((cat) => { pick[cat] = shuffle(S[cat], r).slice(0, 6); });
+  return { order, rot: 0, blocks: order.split('').map((cond, ci) => ({ cond, items: shuffle(['leader', 'varied'].flatMap((cat) => pick[cat].slice(2 * ci, 2 * ci + 2)), r) })) };
 }
 
 // Practice description: B for participants 1-6, C for 7-12, B for 13-18, ... so the practice (with feedback) does not train
@@ -62,8 +62,8 @@ function resume(o) {
   const n = sess.next || { kind: 'intro' };
   if (sess.finished) finish();
   else if (n.kind === 'trial') trial({ b: n.b, i: n.i });
-  else if (n.kind === 'rate') rate(n.b);
-  else if (n.kind === 'numeracy') { sess.rows = sess.rows.filter((r) => r.type !== 'numeracy'); numeracy(); }
+  else if (n.kind === 'brk') brk(n.b);
+  else if (n.kind === 'demo') { sess.rows = sess.rows.filter((r) => r.type !== 'demo'); about(); }
   else if (n.kind === 'pref') prefs();
   else if (n.kind === 'comment') comment();
   else if (n.kind === 'ready') ready();
@@ -82,7 +82,7 @@ async function nextNumber() {
 
 // ---- screen helpers: one thing per screen, a thin progress bar on top, a Back button in the header, the main button
 // fixed at the bottom on phones, Enter = main button, number keys = options.
-const TOTAL = 107;  // screen numbers for the progress bar; the last screen (thank you + results) is 107 = 100%
+const PER = 4, TOTAL = 71;  // 4 paintings per part; screen numbers for the progress bar (some are skipped); the last screen is 71 = 100%
 // Main question (as in Budescu, Broomell & Por 2009, who asked for a number rather than a category): "If 10 new people
 // looked at this painting, how many would pick <the emotion most viewers chose>?" The true value is 10 x count / viewers.
 const truth10 = (s) => (10 * s.order[0][1]) / s.n;
@@ -198,7 +198,7 @@ function welcome() {
   main.querySelectorAll('[data-l]').forEach((b) => b.addEventListener('click', () => { setLang(b.dataset.l); consent(); }));
 }
 function consent() {
-  screen(`<h1>${esc(T.infoH)}</h1><div class="card"><ul class="info">${T.info.map((x, i) => `<li><span aria-hidden="true">${['🏛', '🖼', '💬', '🚪', '🔒', '🔞'][i] || '•'}</span><span>${esc(x)}</span></li>`).join('')}</ul>
+  screen(`<h1>${esc(T.infoH)}</h1><div class="card"><ul class="info">${T.info.map((x, i) => `<li><span aria-hidden="true">${['🏛', '🖼', '🔒', '🔞'][i] || '•'}</span><span>${esc(x)}</span></li>`).join('')}</ul>
     ${C.CONTACT ? `<p class="muted contact">✉️ ${esc(T.contact)}<a href="mailto:${esc(C.CONTACT)}">${esc(C.CONTACT)}</a></p>` : ''}</div>
     <label class="toggle"><input type="checkbox" id="c-age"><span class="sw" aria-hidden="true"></span><span>${esc(T.age)}</span></label>
     <label class="toggle"><input type="checkbox" id="c-agree"><span class="sw" aria-hidden="true"></span><span>${esc(T.agree)}</span></label>` +
@@ -231,9 +231,9 @@ function examples() {
 }
 function trial(pos) {
   const practice = !!pos.practice, s = practice ? S.practice[pos.i] : sess.blocks[pos.b].items[pos.i], cond = practice ? practiceCond() : sess.blocks[pos.b].cond;
-  const k = practice ? pos.i + 1 : pos.b * 6 + pos.i + 1, total = practice ? S.practice.length : 18;
-  const base = practice ? 4 + pos.i * 4 : 13 + pos.b * 29 + pos.i * 4;
-  const head = progress(k, total, practice) + (!practice && k === 10 ? `<p class="halfway pop">${esc(T.halfway)}</p>` : '');
+  const k = practice ? pos.i + 1 : pos.b * PER + pos.i + 1, total = practice ? S.practice.length : 3 * PER;
+  const base = practice ? 4 + pos.i * 4 : 13 + pos.b * 17 + pos.i * 4;
+  const head = progress(k, total, practice) + (!practice && k === 7 ? `<p class="halfway pop">${esc(T.halfway)}</p>` : '');
   // 1. look at the painting and read the description (one screen)
   let readMs = 0, t0 = 0;
   const read = () => {
@@ -245,25 +245,24 @@ function trial(pos) {
     $('go').addEventListener('click', () => { readMs += Math.round(performance.now() - tRead); t0 = performance.now(); ask1(); });
   };
   // 2. questions, one per screen (the description is hidden now): Q1 how many of 10 new people would pick the top emotion,
-  //    how sure, Q2 where a feeling came from
-  let a1 = null, c1 = null, a2 = null;
+  //    Q2 where a feeling came from
+  let a1 = null, a2 = null;
   const r = rng(7 + sess.p * 100 + (practice ? pos.i : 10 + k));
   const asked = r() < 0.5 ? 'people' : 'ai', askedF = asked === 'people' ? s.order[0][0] : s.model[0];   // half the time each
   const q2opts = shuffle(['people', 'ai'], r);
   const ask1 = () => scaleQ({ idx: base + 1, head, q: T.estQ(emo(lang, s.order[0][0])), n: 11, from: 0, chosen: a1, lo: T.estLo, hi: T.estHi,
-    onBack: read, onPick: (v) => { a1 = v; conf(); } });
-  const conf = () => scaleQ({ idx: base + 2, head, q: T.confQ, n: 7, chosen: c1, lo: T.confLo, hi: T.confHi, onBack: ask1, onPick: (v) => { c1 = v; ask2(); } });
+    onBack: read, onPick: (v) => { a1 = v; ask2(); } });
   const ask2 = () => choice({ idx: base + 3, head, q: T.q2f(emo(lang, askedF)), chosen: a2, options: q2opts.map((v) => [v, T.q2o[v]]).concat([['dontknow', T.dontknow]]),
-    onBack: conf, onPick: (v) => { a2 = v; done(); } });
+    onBack: ask1, onPick: (v) => { a2 = v; done(); } });
   const done = () => {
-    if (practice) { feedback(s, a1, a2, asked, askedF, base + 3, () => { a1 = c1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
+    if (practice) { feedback(s, a1, a2, asked, askedF, base + 3, () => { a1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
     sess.rows.push({ type: 'trial', block: pos.b + 1, position: k, condition: cond, painting: s.id, category: s.rule,
       q1_answer: a1, q1_correct: close(a1, s) ? 1 : 0, q2_answer: a2, q2_correct: a2 === asked ? 1 : 0,
       viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0),
-      item: `${asked}:${askedF}`, value: c1 });           // item = the feeling asked about in Q2 and its true source; value = confidence in Q1 (1-7)
-    const next = pos.i + 1 < 6 ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : { kind: 'rate', b: pos.b };
+      item: `${asked}:${askedF}`, value: '' });           // item = the feeling asked about in Q2 and its true source
+    const next = pos.i + 1 < PER ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : pos.b < 2 ? { kind: 'brk', b: pos.b } : { kind: 'demo' };
     save(next); send();
-    if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else rate(pos.b);
+    if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else if (next.kind === 'brk') brk(pos.b); else about();
   };
   read();
 }
@@ -283,74 +282,66 @@ function ready() {
     <div class="parts">${[0, 1, 2].map(() => '<span></span>').join('')}</div></div>` + actions(T.begin), { idx: 12, back: () => trial({ practice: true, i: S.practice.length - 1 }) });
   $('go').addEventListener('click', () => trial({ b: 0, i: 0 }));
 }
-function rate(b) {
-  const base = 13 + b * 29 + 24, cond = sess.blocks[b].cond;
-  let v1 = null, v2 = null, v4 = null;
-  const head = `<p class="kicker">${esc(T.rateIntro)}</p>`;
+// short break after parts 1 and 2 (no questions); after part 2 one attention check ("please choose 5")
+function brk(b) {
+  const base = 13 + b * 17 + 16;
+  let v = null;
   const cheer = () => {
-    screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">${['🌱', '🌿', '🌳'][b]}</span><h1>${esc(T.blockDone(b + 1))}</h1>
-      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div>${T.cheer ? `<p>${esc(T.cheer[b])}</p>` : ''}<p class="timeleft">⏱ ${esc(T.timeLeft((2 - b) * 7 + 3))}</p></div>` +
+    screen(`<div class="celebrate"><span class="big pop" aria-hidden="true">${['🌱', '🌿'][b]}</span><h1>${esc(T.blockDone(b + 1))}</h1>
+      <div class="parts">${[0, 1, 2].map((i) => `<span class="${i <= b ? 'on' : ''}"></span>`).join('')}</div><p>${esc(T.cheer[b])}</p></div>` +
       actions(T.cont), { idx: base });
-    $('go').addEventListener('click', q1);
+    $('go').addEventListener('click', () => (b === 1 ? check() : go()));
   };
-  const q1 = () => scaleQ({ idx: base + 1, head, q: T.r1, n: 7, chosen: v1, onBack: cheer, onPick: (v) => { v1 = v; q2(); } });
-  let v3 = null;
-  const done = () => {
-    sess.rows.push({ type: 'rating', block: b + 1, condition: cond, item: 'room_for_own_response', value: v1 },
-      { type: 'rating', block: b + 1, condition: cond, item: 'hard_to_understand', value: v2 },
-      { type: 'rating', block: b + 1, condition: cond, item: 'trust', value: v4 });
-    if (b < 2) sess.rows.push({ type: 'check', block: b + 1, item: 'attention_pass', value: v3 === (b === 0 ? 2 : 5) ? 1 : 0 });
-    if (b < 2) { save({ kind: 'trial', b: b + 1, i: 0 }); send(); trial({ b: b + 1, i: 0 }); }
-    else { save({ kind: 'numeracy' }); send(); numeracy(); }
+  const check = () => scaleQ({ idx: base, q: T.attention2, n: 7, chosen: v, onBack: cheer, onPick: (x) => { v = x; go(); } });
+  const go = () => {
+    if (b === 1) sess.rows.push({ type: 'check', block: 2, item: 'attention_pass', value: v === 5 ? 1 : 0 });
+    save({ kind: 'trial', b: b + 1, i: 0 }); send(); trial({ b: b + 1, i: 0 });
   };
-  const q2 = () => scaleQ({ idx: base + 2, head, q: T.r2, n: 7, chosen: v2, onBack: q1, onPick: (v) => { v2 = v; q4(); } });
-  const q4 = () => scaleQ({ idx: base + 3, head, q: T.r3, n: 7, chosen: v4, onBack: q2, onPick: (v) => { v4 = v; if (b < 2) q3(); else done(); } });
-  // attention check: a third question after parts 1 and 2 ("please choose 2", then "please choose 5")
-  const q3 = () => scaleQ({ idx: base + 4, head, q: b === 0 ? T.attention : T.attention2, n: 7, chosen: v3, onBack: q4, onPick: (v) => { v3 = v; done(); } });
   cheer();
 }
-// three short number questions (Schwartz, Woloshin, Black & Welch 1997), because description B relies on reading numbers
-function numeracy() {
-  const items = [['n1', 500], ['n2', 10], ['n3', 0.1]];   // texts: T.numQ[0..2]
-  const ask = (i) => {
-    const [id, right] = items[i];
-    screen(`<p class="kicker">${esc(T.numH)}</p>${i === 0 ? `<p class="muted">${esc(T.numIntro)}</p>` : ''}<h2 class="q">${esc(T.numQ[i])}</h2>
-      <input id="num" class="numin" type="text" inputmode="decimal" autocomplete="off" placeholder="${esc(T.numPh)}">` + actions(T.cont, { disabled: true }),
-    { idx: 100 + i, focus: '.q', back: i > 0 ? () => { const j = sess.rows.map((r) => r.type).lastIndexOf('numeracy'); if (j >= 0) sess.rows.splice(j, 1); ask(i - 1); } : null });
-    const box = $('num');
-    box.addEventListener('input', () => { $('go').disabled = !box.value.trim(); });
-    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && box.value.trim()) $('go').click(); });
-    $('go').addEventListener('click', () => {
-      const raw = box.value.trim().slice(0, 30), v = Number(raw.replace(/[%\s]/g, '').replace(',', '.'));
-      sess.rows.push({ type: 'numeracy', item: id, q1_answer: raw, value: Math.abs(v - right) < 1e-9 ? 1 : 0 });
-      if (i + 1 < items.length) ask(i + 1); else { save({ kind: 'pref' }); prefs(); }
-    });
-  };
-  ask(0);
+// about you (asked by the supervisor): age group and art or design background, to describe the sample and as covariates
+function about() {
+  let age = null, art = null;
+  const q1 = () => choice({ idx: 64, head: `<p class="kicker">${esc(T.aboutH)}</p>`, q: T.ageQ, chosen: age,
+    options: ['18-24', '25-34', '35-44', '45-54', '55+', 'na'].map((v) => [v, v === 'na' ? T.preferNot : v]),
+    onPick: (v) => { age = v; q2(); } });
+  const q2 = () => choice({ idx: 65, head: `<p class="kicker">${esc(T.aboutH)}</p>`, q: T.artQ, chosen: art, onBack: q1,
+    options: ['none', 'interest', 'training', 'na'].map((v) => [v, v === 'na' ? T.preferNot : T.artO[v]]),
+    onPick: (v) => {
+      art = v;
+      sess.rows.push({ type: 'demo', item: 'age', value: age }, { type: 'demo', item: 'art_background', value: art });
+      save({ kind: 'pref' }); prefs();
+    } });
+  q1();
 }
+// at the end: the three descriptions of one painting side by side, three quick choices (instead of ratings after every part)
+const PREF_Q = [['museum', () => T.prefQ1], ['hard', () => T.prefQhard], ['room', () => T.prefQroom]];
 function prefs(prev = {}) {
   const s = S.varied[0], r = rng(99 + sess.p), opts = shuffle(['A', 'B', 'C'], r);
-  let p1 = prev.p1 || null, p2 = prev.p2 || null;
+  const val = Object.assign({}, prev);
   const head = `<h1>${esc(T.prefH)}</h1><p class="kicker">${esc(T.prefIntro)}</p>`;
   const opt = () => opts.map((c) => [c, describe(lang, s, c)]);
-  const q1 = () => choice({ idx: 103, head, q: T.prefQ1, chosen: p1, options: opt(), onPick: (v) => { p1 = v; q2(); } });
-  const q2 = () => choice({ idx: 104, head, q: T.prefQ2, chosen: p2, options: opt(), onBack: q1, onPick: (v) => {
-    p2 = v;
-    sess.rows.push({ type: 'pref', painting: s.id, item: 'museum', value: p1, position: opts.indexOf(p1) + 1 },
-      { type: 'pref', painting: s.id, item: 'trust', value: p2, position: opts.indexOf(p2) + 1 });
-    save({ kind: 'comment' }); comment({ p1, p2 });
-  } });
-  if (prev.p2) q2(); else q1();
+  const ask = (i) => {
+    const [item, text] = PREF_Q[i];
+    choice({ idx: 66 + i, head, q: text(), chosen: val[item] || null, options: opt(), onBack: i > 0 ? () => ask(i - 1) : null, onPick: (v) => {
+      val[item] = v;
+      if (i + 1 < PREF_Q.length) { ask(i + 1); return; }
+      PREF_Q.forEach(([it]) => sess.rows.push({ type: 'pref', painting: s.id, item: it, value: val[it], position: opts.indexOf(val[it]) + 1 }));
+      save({ kind: 'comment' }); comment(val);
+    } });
+  };
+  ask(prev.room ? PREF_Q.length - 1 : 0);
 }
 // optional comment at the very end (helps to find unclear parts); kept to 500 characters
 function comment(prev = {}) {
   const old = sess.rows.filter((r) => r.type === 'pref');
-  const back = () => {   // undo the two preference answers (not sent yet) and show the last question again
+  const back = () => {   // undo the end answers (not sent yet) and show the last question again
+    const keep = Object.assign({}, ...old.map((x) => ({ [x.item]: x.value })), prev);
     for (let i = sess.rows.length - 1; i >= 0; i--) if (sess.rows[i].type === 'pref') sess.rows.splice(i, 1);
     save({ kind: 'pref' });
-    prefs({ p1: prev.p1 || (old[0] && old[0].value), p2: prev.p2 || (old[1] && old[1].value) });
+    prefs(keep);
   };
-  screen(`<h2 class="q">${esc(T.commentQ)}</h2><textarea id="cmt" class="cmt" rows="4" maxlength="500" placeholder="${esc(T.commentPh)}"></textarea>` + actions(T.finish), { idx: 105, focus: '.q', back });
+  screen(`<h2 class="q">${esc(T.commentQ)}</h2><textarea id="cmt" class="cmt" rows="4" maxlength="500" placeholder="${esc(T.commentPh)}"></textarea>` + actions(T.finish), { idx: 69, focus: '.q', back });
   $('go').addEventListener('click', () => {
     const v = $('cmt').value.trim().slice(0, 500);
     if (v) sess.rows.push({ type: 'comment', item: 'confusing', value: v });
@@ -369,10 +360,10 @@ function results() {   // per kind of description, no single total; the reason t
     <div class="card"><h2>${esc(T.debriefH)}</h2><p>${esc(T.debrief)}</p></div>`;
 }
 async function finish() {
-  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 106 });
+  screen(`<div class="celebrate"><span class="big spin" aria-hidden="true">⏳</span><p>${esc(T.sending)}</p></div>`, { idx: 70 });
   const ok = await send();
   if (!ok) {
-    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 106 });
+    screen(`<div class="card"><p>${esc(T.failed)}</p></div>` + actions(T.retry), { idx: 70 });
     $('go').addEventListener('click', finish); return;
   }
   store.del(KEY); store.set(DONE, '1');
@@ -396,7 +387,7 @@ sel.innerHTML = LANGS.map(([k, n]) => `<option value="${k}">${n}</option>`).join
 let redraw = null;
 const track = (fn) => function (...args) { redraw = () => fn(...args); return fn(...args); };
 welcome = track(welcome); consent = track(consent); intro = track(intro); examples = track(examples); trial = track(trial);
-feedback = track(feedback); ready = track(ready); rate = track(rate); prefs = track(prefs); numeracy = track(numeracy); comment = track(comment); finish = track(finish);
+feedback = track(feedback); ready = track(ready); brk = track(brk); prefs = track(prefs); about = track(about); comment = track(comment); finish = track(finish);
 sel.addEventListener('change', () => {
   const before = lang;
   setLang(sel.value);

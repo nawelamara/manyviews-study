@@ -16,8 +16,11 @@ before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: wh
 Q1 (Nov 21) is a number, as in Budescu, Broomell & Por (2009): "If 10 new people looked at this painting, how many would pick
 <the emotion most viewers chose>?" (0-10). True value = 10 x count / viewers; main outcome = |answer - true| (also bias = answer - true).
 q1_answer = the number, q1_correct = within 1 of the true value. Earlier versions (Q1 as a category) are left out by analyze_study.py.
-After part 3: 3 numeracy questions (Schwartz et al. 1997; rows type 'numeracy', q1_answer = what was typed, value = correct 0/1).
-Paintings: 9 'leader' + 9 'varied' per person, drawn from a pool of 11 + 12; 3 of each type per description.
+Between parts: a short break; one attention check after part 2. After part 3: age group + art/design background (rows type 'demo'),
+then 3 choices with the three descriptions side by side (rows type 'pref': museum / hard / room), optional comment.
+Nov 22: confidence after each painting, the 3 numeracy questions and the second preference question were removed to
+shorten the study. Later the same day: 12 paintings instead of 18, no ratings after each part, shorter texts (about 15 minutes).
+Paintings (Nov 22): 6 'leader' + 6 'varied' per person, drawn from a pool of 11 + 12; 2 of each type per description (3 parts of 4).
 (The first version also had a 'too few answers' type; it was dropped because all its paintings had 9 of 10 viewers
 choosing an emotion, which does not look like 'too few'. analyze_study.py leaves out sessions from that version.)
 In paper: the design follows the words / numbers / words + numbers paradigm (Budescu et al. 2009); main test C vs B on Q1 error.
@@ -28,7 +31,7 @@ Fixed before data collection (design review):
   trials where the word does not also appear in the other list.
 - The 'opposite directions' sentence belongs to C only (supervisor's wording). It occurs on 5 of the 23 study paintings, so
   report that count; the with/without split in analyze_study.py has small cells and is descriptive only.
-- One name for the people in the data: "viewers" (descriptions, questions and feedback). Time shown: 20-25 minutes.
+- One name for the people in the data: "viewers" (descriptions, questions and feedback). Time shown: about 15 minutes.
 Answers are sent after every painting; progress is kept in the browser, so a refresh can continue.
 The language menu (🌐, top right) works on every page; a change is saved as a "lang" row in the sheet.
 

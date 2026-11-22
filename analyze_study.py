@@ -8,11 +8,14 @@ Plan (fixed before data collection):
   * Main outcome (as in Budescu, Broomell & Por 2009, who asked for numbers): Q1 = "if 10 new people looked at this painting,
     how many would pick <the emotion most viewers chose>?" (0-10). Error = |answer - 10 x count / viewers|; bias = answer - true
     (above 0 = agreement over-estimated). "Close" (q1_correct) = error <= 1.
-  * Other outcomes per painting: confidence in Q1 (1-7), Q2 source correct (people vs AI).
-  * Numeracy (3 items, Schwartz et al. 1997) as a covariate: does B (numbers only) depend more on numeracy than C?
-  * Also: Q1 in the first part only (before people can learn the pattern), confidence when right vs wrong
-    (calibration), the two ratings per part, and the preference questions at the end.
-  * Sessions are used only if finished and both attention checks were passed.
+  * Second outcome per painting: Q2 source correct (viewers vs AI).
+  * 12 paintings per person (3 parts of 4; 2 'leader' + 2 'varied' per part). One attention check after part 2.
+  * At the end: age group, art background, then the three descriptions side by side with three choices: which one to read
+    in a museum, which was hardest to understand, which leaves most room for own feelings. (Nov 22: confidence, numeracy
+    and the ratings after each part were dropped to shorten the study.)
+  * Also: Q1 in the first part only (before people can learn the pattern)
+    and the three choices at the end.
+  * Sessions are used only if finished and the attention check was passed.
   * Paintings are drawn at random from a pool for each participant; a mixed model treats them as random effects.
 """
 import sys
@@ -41,7 +44,6 @@ t = d[d["type"] == "trial"].copy()
 old_q = t.loc[num(t["q1_answer"]).isna(), "session_id"].unique()   # first versions asked Q1 as a category, not a number
 if len(old_q): print(f"Sessions from versions with the category question (left out): {len(old_q)}")
 t = t[~t["session_id"].isin(old_q)]; d = d[~d["session_id"].isin(old_q)]
-t["conf"] = num(t["value"])
 t["block"] = num(t["block"])
 import json as _json, os as _os, re as _re
 _S = _json.loads(_re.search(r"window.STIMULI = (\{.*\});", open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "stimuli.js"), encoding="utf-8").read(), _re.S).group(1))
@@ -54,21 +56,19 @@ print(f"Participants used: {t['session_id'].nunique()} | trials: {len(t)}")
 
 def per_person(x):
     return x.groupby(["session_id", "condition"]).agg(err=("err", "mean"), bias=("bias", "mean"), close=("q1_correct", "mean"),
-                                                       q2=("q2_correct", "mean"), conf=("conf", "mean")).reset_index()
+                                                       q2=("q2_correct", "mean")).reset_index()
 
 pp = per_person(t)
 print("\nMean per condition (err = mean distance from the true value, 0-10 scale; bias > 0 = agreement over-estimated;")
-print("close = share within 1; q2 = share correct; conf 1-7):")
-print(pp.groupby("condition")[["err", "bias", "close", "q2", "conf"]].mean().round(3))
+print("close = share within 1; q2 = share correct):")
+print(pp.groupby("condition")[["err", "bias", "close", "q2"]].mean().round(3))
 print("\nQ1 error and bias by painting type (leader / varied) and condition:")
 print(t.pivot_table(index="category", columns="condition", values=["err", "bias"], aggfunc="mean").round(3))
 
-print("\nCalibration: correlation between confidence and error, per condition (more negative = better calibrated):")
-print(t.groupby("condition").apply(lambda x: x["conf"].corr(x["err"])).round(3))
 
 first = t[t["block"] == 1]
 print("\nFirst part only (each person saw one condition here; between-person comparison):")
-print(first.groupby("condition")[["err", "bias", "q2_correct", "conf"]].mean().round(3))
+print(first.groupby("condition")[["err", "bias", "q2_correct"]].mean().round(3))
 
 # varied paintings: does it matter whether the 3 most chosen feelings point in the same or opposite directions?
 import json, os, re
@@ -125,31 +125,27 @@ print(t[t["q2_overlap"] == 0].groupby("condition")["q2_correct"].agg(["mean", "c
 t["opp_sentence"] = t["painting"].map(lambda i: direction.get(i) == "opposite")
 print("\nQ1 error, B vs C, paintings with / without the 'opposite directions' sentence (C only shows it):")
 print(t[t["condition"].isin(["B", "C"])].pivot_table(index="opp_sentence", columns="condition", values="err", aggfunc=["mean", "count"]).round(3))
-# 4. Numeracy (0-3 correct): is B (numbers only) harder for people with low numeracy than C (numbers + sentence)?
-nm = d[d["type"] == "numeracy"].assign(v=lambda x: num(x["value"])).groupby("session_id")["v"].sum()
-if len(nm):
-    pp["numeracy"] = pp["session_id"].map(nm)
-    pp["numeracy_group"] = np.where(pp["numeracy"] >= 2, "high (2-3)", "low (0-1)")
-    print("\nNumeracy score (0-3), number of people:", nm.value_counts().sort_index().to_dict())
-    print("Q1 error by numeracy group and condition:")
-    print(pp.pivot_table(index="numeracy_group", columns="condition", values="err", aggfunc="mean").round(3))
-
-r = d[d["type"] == "rating"]
-print("\nRatings (1-7), mean by condition:")
-print(r.assign(value=num(r["value"])).pivot_table(index="item", columns="condition", values="value", aggfunc="mean").round(2))
+# 4. About the participants (asked at the end): age group and art or design background
+dm = d[d["type"] == "demo"].pivot_table(index="session_id", columns="item", values="value", aggfunc="first")
+if len(dm):
+    print("\nAge groups:", dm.get("age", pd.Series(dtype=str)).value_counts().to_dict())
+    print("Art or design background:", dm.get("art_background", pd.Series(dtype=str)).value_counts().to_dict())
+    pp["art"] = pp["session_id"].map(dm.get("art_background", pd.Series(dtype=str)))
+    print("Q1 error by art background and condition:")
+    print(pp.pivot_table(index="art", columns="condition", values="err", aggfunc="mean").round(3))
 
 p = d[d["type"] == "pref"]
-print("\nPreferences at the end (share choosing each description):")
+print("\nChoices at the end (share choosing each description; museum = would read, hard = hardest, room = most room for own feelings):")
 print(pd.crosstab(p["item"], p["value"], normalize="index").round(3))
 
 try:
     from scipy import stats
 except ImportError:
     stats = None
-print("\nPlanned paired comparisons (per-person means; Holm-corrected over the 8 tests). Main: C vs B on err.")
+print("\nPlanned paired comparisons (per-person means; Holm-corrected over the 6 tests). Main: C vs B on err.")
 w = pp.pivot(index="session_id", columns="condition")
 rows = []
-for out in ["err", "bias", "q2", "conf"]:
+for out in ["err", "bias", "q2"]:
     for a, b in [("C", "B"), ("C", "A")]:
         x = (w[(out, a)] - w[(out, b)]).dropna()
         dz = x.mean() / x.std(ddof=1) if len(x) > 1 and x.std(ddof=1) > 0 else np.nan
