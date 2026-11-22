@@ -1,6 +1,10 @@
 """Analysis of the Many Views online study (A single emotion / B fixed top 3 / C agreement-adaptive).
 
-Usage:  python analyze_study.py answers.csv      (the "answers" tab of the Google Sheet, downloaded as CSV)
+Usage:  python analyze_study.py study.xlsx          (the Google Sheet: File > Download > Microsoft Excel)
+   or:  python analyze_study.py sessions.csv trials.csv responses.csv   (the three tabs downloaded as CSV)
+
+The sheet has three tabs: sessions (one row per participant), trials (one row per painting), responses (everything else).
+Only sessions with app_version >= MIN_VERSION are used (earlier versions measured things differently).
 
 Plan (fixed before data collection):
   * Main comparison: C vs B (both give the same counts; only C adds a sentence about agreement).
@@ -22,9 +26,23 @@ import sys
 import numpy as np
 import pandas as pd
 
-d = pd.read_csv(sys.argv[1])
+MIN_VERSION = "2026-11-22"
 num = lambda s: pd.to_numeric(s, errors="coerce")
-d = d.drop_duplicates(["session_id", "type", "position", "block", "item"])
+if len(sys.argv) == 2:
+    xl = pd.read_excel(sys.argv[1], sheet_name=None)
+    ses, tri, res = xl["sessions"], xl["trials"], xl["responses"]
+else:
+    ses, tri, res = (pd.read_csv(f) for f in sys.argv[1:4])
+ses = ses.drop_duplicates("session_id", keep="last")
+ses = ses[ses["app_version"].astype(str) >= MIN_VERSION]
+print(f"Sessions of this version (app_version >= {MIN_VERSION}): {len(ses)}")
+# one long table in the shape the analysis below uses (type / item / value as before, plus the trial columns)
+tri = tri.drop_duplicates(["session_id", "block", "position"])
+tri = tri.assign(type="trial", painting=tri["painting_id"], q1_answer=tri["q1_estimate"], q1_correct=tri["q1_close"],
+                 item=tri["q2_asked_source"].astype(str) + ":" + tri["q2_asked_feeling"].astype(str), value="")
+res = res.drop_duplicates(["session_id", "section", "block", "item"]).rename(columns={"section": "type"})
+d = pd.concat([tri, res], ignore_index=True)
+d = d.merge(ses[["session_id", "lang", "assigned_by", "order"]], on="session_id", how="inner")
 fin = d.loc[d["type"] == "pref", "session_id"].unique()              # reached the end
 print(f"Sessions in the sheet: {d['session_id'].nunique()} | finished: {len(fin)}")
 d = d[d["session_id"].isin(fin)]

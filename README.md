@@ -69,3 +69,13 @@ It removes unfinished sessions and attention-check failures and prints the resul
 - [ ] `CONTACT` filled in; consent text approved by the ethics committee
 - [ ] Test run in every language; test rows deleted; counter reset
 - [ ] 5-person pilot (in preview or a separate sheet), then fix anything unclear
+
+## Google Sheet layout (from Nov 22, app_version 2026-11-22)
+Three tabs, made automatically by Code.gs: `sessions` (one row per participant, updated in place; `completed`, `preview`,
+`app_version`), `trials` (one row per painting: q1_estimate, q1_truth, q1_error = main outcome, q1_close, q2_asked_feeling,
+q2_asked_source, q2_answer, q2_correct, ...), `responses` (section / block / item / value: practice, demo, check, pref,
+comment, lang with value 'from>to'). The old `answers` tab is not used; rename it `pilot_mixed_versions`.
+To update the script: paste Code.gs into Extensions > Apps Script, then Deploy > Manage deployments > edit > Version: New version
+> Deploy (the web-app URL in config.js stays the same).
+Analysis: `python analyze_study.py study.xlsx` (File > Download > Microsoft Excel) or the three tabs as CSV.
+

@@ -34,6 +34,7 @@ const practiceCond = () => (Math.floor((sess.p - 1) / 6) % 2 ? 'C' : 'B');
 
 // ---- sending (Google Apps Script web app); no-cors, so the whole session is resent each time and the sheet keeps one copy
 const sess = { rows: [] };
+const APP_VERSION = '2026-11-22';   // stored with every session, so answers from different versions are never mixed
 // sends go one after another (never overlapping), so the sheet always receives them in order
 let queue = Promise.resolve(true);
 function send() { queue = queue.then(sendNow, sendNow); return queue; }
@@ -42,7 +43,7 @@ async function sendNow() {
   try {
     await fetch(C.ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ session: { id: sess.id, participant: sess.p, order: sess.order, rotation: sess.rot, lang, started_at: sess.started,
-        finished_at: sess.finished || '', assigned_by: sess.assignedBy + (preview ? '-preview' : '') }, rows: sess.rows }) });
+        finished_at: sess.finished || '', assigned_by: sess.assignedBy + (preview ? '-preview' : ''), app_version: APP_VERSION }, rows: sess.rows }) });
     return true;
   } catch (e) { return false; }
 }
@@ -256,10 +257,11 @@ function trial(pos) {
     onBack: ask1, onPick: (v) => { a2 = v; done(); } });
   const done = () => {
     if (practice) { feedback(s, a1, a2, asked, askedF, base + 3, () => { a1 = a2 = null; read(); }, () => (pos.i + 1 < S.practice.length ? trial({ practice: true, i: pos.i + 1 }) : ready()), ask2); return; }
+    const tv = truth10(s);   // every answer in its own column; q1_error is the main outcome
     sess.rows.push({ type: 'trial', block: pos.b + 1, position: k, condition: cond, painting: s.id, category: s.rule,
-      q1_answer: a1, q1_correct: close(a1, s) ? 1 : 0, q2_answer: a2, q2_correct: a2 === asked ? 1 : 0,
-      viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0),
-      item: `${asked}:${askedF}`, value: '' });           // item = the feeling asked about in Q2 and its true source
+      q1_estimate: a1, q1_truth: Math.round(tv * 100) / 100, q1_error: Math.round(Math.abs(a1 - tv) * 100) / 100, q1_close: close(a1, s) ? 1 : 0,
+      q2_asked_feeling: askedF, q2_asked_source: asked, q2_answer: a2, q2_correct: a2 === asked ? 1 : 0,
+      viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0) });
     const next = pos.i + 1 < PER ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : pos.b < 2 ? { kind: 'brk', b: pos.b } : { kind: 'pref' };
     save(next); send();
     if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else if (next.kind === 'brk') brk(pos.b); else prefs();
@@ -360,7 +362,7 @@ function results() {   // per kind of description, no single total; the reason t
   const tr = sess.rows.filter((r) => r.type === 'trial');
   if (!tr.length) return '';
   const by = {};
-  ['A', 'B', 'C'].forEach((c) => { const x = tr.filter((r) => r.condition === c); by[c] = [x.filter((r) => r.q1_correct).length, x.length]; });   // q1_correct = estimate within 1 of the true value
+  ['A', 'B', 'C'].forEach((c) => { const x = tr.filter((r) => r.condition === c); by[c] = [x.filter((r) => r.q1_close).length, x.length]; });   // q1_close = estimate within 1 of the true value
   return `<div class="card results"><h2>${esc(T.resH)}</h2>
     ${['A', 'B', 'C'].map((c) => `<div class="rbar"><span class="rname">${esc(T.rowNames[c])}</span><span class="rtrack"><i style="width:${by[c][1] ? (100 * by[c][0]) / by[c][1] : 0}%"></i></span><span class="rnum">${esc(T.resOf(by[c][0], by[c][1]))}</span></div>`).join('')}
     <p class="resnote">${esc(T.resNote)}</p></div>
@@ -398,7 +400,7 @@ feedback = track(feedback); ready = track(ready); brk = track(brk); prefs = trac
 sel.addEventListener('change', () => {
   const before = lang;
   setLang(sel.value);
-  if (sess.id && before !== lang) { sess.rows.push({ type: 'lang', item: before, value: lang }); save(sess.next); }
+  if (sess.id && before !== lang) { sess.rows.push({ type: 'lang', item: 'lang_switch', value: `${before}>${lang}` }); save(sess.next); }
   (redraw || welcome)();
 });
 let saved = 'en'; try { saved = localStorage.getItem('mv-study-lang') || 'en'; } catch (e) { /* ignore */ }
