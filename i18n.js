@@ -90,6 +90,8 @@ function describe(lang, s, cond) {
 // keys not used by app.js were removed. The 'too few' answer type was dropped from the study (Nov 21).
 const UI = {
   "en": {
+    genderQ: "What is your gender?",
+    genderO: {"woman": "Woman", "man": "Man", "other": "Another gender"},
     aboutH: "About you",
     age: "I am 18 years old or older.",
     ageQ: "How old are you?",
@@ -180,6 +182,8 @@ const UI = {
     zoom: "See the painting bigger",
   },
   "zh-Hant": {
+    genderQ: "您的性別是？",
+    genderO: {"woman": "女性", "man": "男性", "other": "其他性別"},
     aboutH: "關於您",
     age: "我已年滿 18 歲。",
     ageQ: "您的年齡是？",
@@ -270,6 +274,8 @@ const UI = {
     zoom: "放大看這幅畫",
   },
   "fr": {
+    genderQ: "Quel est votre genre ?",
+    genderO: {"woman": "Femme", "man": "Homme", "other": "Autre genre"},
     aboutH: "À propos de vous",
     age: "J’ai 18 ans ou plus.",
     ageQ: "Quel âge avez-vous ?",
@@ -360,6 +366,8 @@ const UI = {
     zoom: "Voir le tableau en plus grand",
   },
   "ar": {
+    genderQ: "ما جنسك؟",
+    genderO: {"woman": "امرأة", "man": "رجل", "other": "جنس آخر"},
     aboutH: "عنك",
     age: "عمري 18 عامًا أو أكثر.",
     ageQ: "كم عمرك؟",
@@ -450,6 +458,8 @@ const UI = {
     zoom: "عرض اللوحة بحجم أكبر",
   },
   "ur": {
+    genderQ: "آپ کی جنس کیا ہے؟",
+    genderO: {"woman": "عورت", "man": "مرد", "other": "دیگر"},
     aboutH: "آپ کے بارے میں",
     age: "میری عمر 18 سال یا اس سے زیادہ ہے۔",
     ageQ: "آپ کی عمر کتنی ہے؟",

@@ -10,7 +10,7 @@ Plan (fixed before data collection):
     (above 0 = agreement over-estimated). "Close" (q1_correct) = error <= 1.
   * Second outcome per painting: Q2 source correct (viewers vs AI).
   * 12 paintings per person (3 parts of 4; 2 'leader' + 2 'varied' per part). One attention check after part 2.
-  * At the end: age group, art background, then the three descriptions side by side with three choices: which one to read
+  * Right after consent: age group, gender, art background. At the end: the three descriptions side by side with three choices: which one to read
     in a museum, which was hardest to understand, which leaves most room for own feelings. (Nov 22: confidence, numeracy
     and the ratings after each part were dropped to shorten the study.)
   * Also: Q1 in the first part only (before people can learn the pattern)
@@ -125,11 +125,12 @@ print(t[t["q2_overlap"] == 0].groupby("condition")["q2_correct"].agg(["mean", "c
 t["opp_sentence"] = t["painting"].map(lambda i: direction.get(i) == "opposite")
 print("\nQ1 error, B vs C, paintings with / without the 'opposite directions' sentence (C only shows it):")
 print(t[t["condition"].isin(["B", "C"])].pivot_table(index="opp_sentence", columns="condition", values="err", aggfunc=["mean", "count"]).round(3))
-# 4. About the participants (asked at the end): age group and art or design background
+# 4. About the participants (asked right after consent): age group, gender, art or design background
 dm = d[d["type"] == "demo"].pivot_table(index="session_id", columns="item", values="value", aggfunc="first")
 if len(dm):
     print("\nAge groups:", dm.get("age", pd.Series(dtype=str)).value_counts().to_dict())
     print("Art or design background:", dm.get("art_background", pd.Series(dtype=str)).value_counts().to_dict())
+    print("Gender:", dm.get("gender", pd.Series(dtype=str)).value_counts().to_dict())
     pp["art"] = pp["session_id"].map(dm.get("art_background", pd.Series(dtype=str)))
     print("Q1 error by art background and condition:")
     print(pp.pivot_table(index="art", columns="condition", values="err", aggfunc="mean").round(3))

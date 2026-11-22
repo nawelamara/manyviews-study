@@ -238,3 +238,11 @@ html[lang=ur] body { line-height: 1.85; }
 /* number answers (numeracy questions) */
 .numin { width: 100%; font: inherit; font-size: 22px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); margin: 8px 0 4px; }
 .numin:focus { outline: none; border-color: var(--purple-2); box-shadow: 0 0 0 4px var(--lav); }
+/* "About you" (right after consent): three short questions, one tap each */
+.chipq { border: 0; margin: 0 0 18px; padding: 0; }
+.chipq legend { font-weight: 700; font-size: 17px; margin-bottom: 10px; padding: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 15px; padding: 10px 16px; min-height: 44px; border-radius: 999px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; text-align: start; }
+.chip:hover { border-color: var(--line-2); }
+.chip[aria-pressed="true"] { border-color: var(--purple); background: var(--lav); color: var(--purple); font-weight: 600; }
+.chip:focus-visible { outline: 3px solid var(--purple-2); outline-offset: 2px; }

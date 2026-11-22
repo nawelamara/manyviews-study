@@ -16,8 +16,8 @@ before you feel?" → confidence 1–7 → Q2 "where did <feeling> come from: wh
 Q1 (Nov 21) is a number, as in Budescu, Broomell & Por (2009): "If 10 new people looked at this painting, how many would pick
 <the emotion most viewers chose>?" (0-10). True value = 10 x count / viewers; main outcome = |answer - true| (also bias = answer - true).
 q1_answer = the number, q1_correct = within 1 of the true value. Earlier versions (Q1 as a category) are left out by analyze_study.py.
-Between parts: a short break; one attention check after part 2. After part 3: age group + art/design background (rows type 'demo'),
-then 3 choices with the three descriptions side by side (rows type 'pref': museum / hard / room), optional comment.
+Between parts: a short break; one attention check after part 2. Right after consent: age group, gender, art/design background on one screen, all required (rows type 'demo').
+After part 3: 3 choices with the three descriptions side by side (rows type 'pref': museum / hard / room), optional comment.
 Nov 22: confidence after each painting, the 3 numeracy questions and the second preference question were removed to
 shorten the study. Later the same day: 12 paintings instead of 18, no ratings after each part, shorter texts (about 15 minutes).
 Paintings (Nov 22): 6 'leader' + 6 'varied' per person, drawn from a pool of 11 + 12; 2 of each type per description (3 parts of 4).

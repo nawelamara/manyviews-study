@@ -63,7 +63,7 @@ function resume(o) {
   if (sess.finished) finish();
   else if (n.kind === 'trial') trial({ b: n.b, i: n.i });
   else if (n.kind === 'brk') brk(n.b);
-  else if (n.kind === 'demo') { sess.rows = sess.rows.filter((r) => r.type !== 'demo'); about(); }
+  else if (n.kind === 'about') about();
   else if (n.kind === 'pref') prefs();
   else if (n.kind === 'comment') comment();
   else if (n.kind === 'ready') ready();
@@ -212,14 +212,14 @@ function consent() {
         started: new Date().toISOString(), assignedBy: by });
       sess.rows.push({ type: 'practice', item: 'condition', value: practiceCond() });
     }
-    save({ kind: 'intro' });
-    intro();
+    save({ kind: 'about' });
+    about();
   });
 }
 function intro() {
   screen(`<h1>${esc(T.introH)}</h1><p class="lead">${esc(T.explain)}</p>
     <ol class="steps">${T.steps.map(([ic, h, t], i) => `<li class="step"><span class="ic" aria-hidden="true">${ic}</span><div><b><span class="n">${i + 1}</span> ${esc(h)}</b><p>${esc(t)}</p></div></li>`).join('')}</ol>
-    <p class="center muted">${esc(T.introEnd)}</p>` + actions(T.startPractice), { idx: 2, back: consent });
+    <p class="center muted">${esc(T.introEnd)}</p>` + actions(T.startPractice), { idx: 2, back: about });
   $('go').addEventListener('click', examples);
 }
 function examples() {
@@ -260,9 +260,9 @@ function trial(pos) {
       q1_answer: a1, q1_correct: close(a1, s) ? 1 : 0, q2_answer: a2, q2_correct: a2 === asked ? 1 : 0,
       viewer_top: s.order[0][0], model_top: s.model[0], read_ms: readMs, answer_ms: Math.round(performance.now() - t0),
       item: `${asked}:${askedF}`, value: '' });           // item = the feeling asked about in Q2 and its true source
-    const next = pos.i + 1 < PER ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : pos.b < 2 ? { kind: 'brk', b: pos.b } : { kind: 'demo' };
+    const next = pos.i + 1 < PER ? { kind: 'trial', b: pos.b, i: pos.i + 1 } : pos.b < 2 ? { kind: 'brk', b: pos.b } : { kind: 'pref' };
     save(next); send();
-    if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else if (next.kind === 'brk') brk(pos.b); else about();
+    if (next.kind === 'trial') trial({ b: next.b, i: next.i }); else if (next.kind === 'brk') brk(pos.b); else prefs();
   };
   read();
 }
@@ -299,20 +299,27 @@ function brk(b) {
   };
   cheer();
 }
-// about you (asked by the supervisor): age group and art or design background, to describe the sample and as covariates
+// about you, right after consent (asked by the supervisor): age group, gender, art or design background.
+// One screen, every question must be answered ("prefer not to say" is always an option).
 function about() {
-  let age = null, art = null;
-  const q1 = () => choice({ idx: 64, head: `<p class="kicker">${esc(T.aboutH)}</p>`, q: T.ageQ, chosen: age,
-    options: ['18-24', '25-34', '35-44', '45-54', '55+', 'na'].map((v) => [v, v === 'na' ? T.preferNot : v]),
-    onPick: (v) => { age = v; q2(); } });
-  const q2 = () => choice({ idx: 65, head: `<p class="kicker">${esc(T.aboutH)}</p>`, q: T.artQ, chosen: art, onBack: q1,
-    options: ['none', 'interest', 'training', 'na'].map((v) => [v, v === 'na' ? T.preferNot : T.artO[v]]),
-    onPick: (v) => {
-      art = v;
-      sess.rows.push({ type: 'demo', item: 'age', value: age }, { type: 'demo', item: 'art_background', value: art });
-      save({ kind: 'pref' }); prefs();
-    } });
-  q1();
+  const Q = [['age', () => T.ageQ, ['18-24', '25-34', '35-44', '45-54', '55+', 'na'], (v) => (v === 'na' ? T.preferNot : v)],
+    ['gender', () => T.genderQ, ['woman', 'man', 'other', 'na'], (v) => (v === 'na' ? T.preferNot : T.genderO[v])],
+    ['art_background', () => T.artQ, ['none', 'interest', 'training', 'na'], (v) => (v === 'na' ? T.preferNot : T.artO[v])]];
+  const val = {};
+  sess.rows.filter((r) => r.type === 'demo').forEach((r) => { val[r.item] = r.value; });
+  screen(`<h1>${esc(T.aboutH)}</h1>` + Q.map(([id, q, opts, label]) => `<fieldset class="chipq"><legend>${esc(q())}</legend><div class="chips">${opts.map((v) =>
+    `<button type="button" class="chip" data-q="${id}" data-v="${esc(v)}" aria-pressed="${val[id] === v}">${esc(label(v))}</button>`).join('')}</div></fieldset>`).join('') +
+    actions(T.cont, { disabled: Q.some(([id]) => !val[id]) }), { idx: 2, back: consent });
+  main.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => {
+    val[b.dataset.q] = b.dataset.v;
+    main.querySelectorAll(`.chip[data-q="${b.dataset.q}"]`).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('go').disabled = Q.some(([id]) => !val[id]);
+  }));
+  $('go').addEventListener('click', () => {
+    sess.rows = sess.rows.filter((r) => r.type !== 'demo');
+    Q.forEach(([id]) => sess.rows.push({ type: 'demo', item: id, value: val[id] }));
+    save({ kind: 'intro' }); intro();
+  });
 }
 // at the end: the three descriptions of one painting side by side, three quick choices (instead of ratings after every part)
 const PREF_Q = [['museum', () => T.prefQ1], ['hard', () => T.prefQhard], ['room', () => T.prefQroom]];
