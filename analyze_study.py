@@ -43,6 +43,19 @@ tri = tri.assign(type="trial", painting=tri["painting_id"], q1_answer=tri["q1_es
 res = res.drop_duplicates(["session_id", "section", "block", "item"]).rename(columns={"section": "type"})
 d = pd.concat([tri, res], ignore_index=True)
 d = d.merge(ses[["session_id", "lang", "assigned_by", "order"]], on="session_id", how="inner")
+# Sessions of the SAME design saved on Nov 22 before the three-tab sheet (old one-table tab "answers" /
+# "pilot_mixed_versions"): 12 paintings, number question, gender asked at the start. They are added; older versions are not.
+if len(sys.argv) == 2:
+    olds = [xl[n] for n in ("answers", "pilot_mixed_versions") if n in xl]
+    if olds:
+        o = pd.concat(olds, ignore_index=True)
+        o = o.drop_duplicates(["session_id", "type", "position", "block", "item"])
+        same = [sid for sid, g in o.groupby("session_id")
+                if (g["type"] == "trial").sum() == 12 and ((g["type"] == "demo") & (g["item"] == "gender")).any()
+                and num(g.loc[g["type"] == "trial", "q1_answer"]).notna().all() and sid not in set(d["session_id"])]
+        if same:
+            print(f"Same-design sessions from the old tab added: {len(same)}")
+            d = pd.concat([d, o[o["session_id"].isin(same)]], ignore_index=True)
 fin = d.loc[d["type"] == "pref", "session_id"].unique()              # reached the end
 print(f"Sessions in the sheet: {d['session_id'].nunique()} | finished: {len(fin)}")
 d = d[d["session_id"].isin(fin)]
